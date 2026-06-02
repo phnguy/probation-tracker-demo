@@ -1,0 +1,13 @@
+env/.env.*.user
+env/.env.local
+env/.env.dev
+.localConfigs
+appPackage/build
+node_modules/
+.env
+.deployment
+.DS_Store
+appPackage/.generated
+.azurite
+src/mcpserver/assets/
+dist/

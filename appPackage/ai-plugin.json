@@ -1,0 +1,114 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "probation-tracker",
+    "description_for_human": "probation-tracker${{APP_NAME_SUFFIX}}",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "probationtracker",
+    "functions": [
+        {
+            "name": "show-probation-dashboard",
+            "description": "Displays the probation dashboard showing all probationers with status overview, filters, and summary metrics. Supports filtering by department, status, and name search."
+        },
+        {
+            "name": "show-probationer-detail",
+            "description": "Displays detailed information about a specific probationer including objectives, check-ins, and timeline progress. Use probationer ID or name."
+        },
+        {
+            "name": "show-probation-reports",
+            "description": "Displays probation analytics with status distribution, department breakdown, objective/check-in stats, and upcoming reviews."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "${{MCP_SERVER_URL}}/mcp",
+                "x-mcp_tool_description": {
+                    "tools": [
+                        {
+                            "name": "show-probation-dashboard",
+                            "title": "Show Probation Dashboard",
+                            "description": "Displays the probation dashboard showing all probationers with status overview, filters, and summary metrics. Supports filtering by department, status, and name search. When the user mentions a person's name, pass it as the search parameter.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "department": {
+                                        "type": "string",
+                                        "description": "Filter by department (e.g. 'Engineering', 'Sales', 'Marketing', 'Operations', 'HR', 'Finance')"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Filter by status (e.g. 'In Progress', 'At Risk', 'Completed', 'Extended', 'Failed')"
+                                    },
+                                    "search": {
+                                        "type": "string",
+                                        "description": "Search by name or job title. Case-insensitive partial match."
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": true },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/dashboard.html" },
+                                "ui/resourceUri": "ui://probation/dashboard.html"
+                            }
+                        },
+                        {
+                            "name": "show-probationer-detail",
+                            "title": "Show Probationer Detail",
+                            "description": "Displays detailed information about a specific probationer including objectives, check-ins, and timeline progress. Use probationer ID (e.g. 'PR001') or name.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "probationer_id": {
+                                        "type": "string",
+                                        "description": "Probationer ID (e.g. 'PR001')"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Full or partial name to search (case-insensitive)"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": true },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/detail.html" },
+                                "ui/resourceUri": "ui://probation/detail.html"
+                            }
+                        },
+                        {
+                            "name": "show-probation-reports",
+                            "title": "Show Probation Reports",
+                            "description": "Displays probation analytics with status distribution, department breakdown, objective/check-in stats, and upcoming reviews.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {},
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": true },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/reports.html" },
+                                "ui/resourceUri": "ui://probation/reports.html"
+                            }
+                        }
+                    ]
+                }
+            },
+            "run_for_functions": [
+                "show-probation-dashboard",
+                "show-probationer-detail",
+                "show-probation-reports"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        }
+    ]
+}

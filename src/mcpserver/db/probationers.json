@@ -1,0 +1,62 @@
+[
+  {
+    "id": "PR001",
+    "fullName": "Sarah Martinez",
+    "email": "sarah.martinez@contoso.com",
+    "jobTitle": "Software Engineer",
+    "department": "Engineering",
+    "startDate": "2026-01-15",
+    "endDate": "2026-07-15",
+    "status": "In Progress",
+    "notes": "Strong technical onboarding and positive peer feedback.",
+    "imageUrl": "https://i.pravatar.cc/150?img=32"
+  },
+  {
+    "id": "PR002",
+    "fullName": "Daniel Cho",
+    "email": "daniel.cho@contoso.com",
+    "jobTitle": "Account Executive",
+    "department": "Sales",
+    "startDate": "2026-02-03",
+    "endDate": "2026-08-03",
+    "status": "At Risk",
+    "notes": "Needs support improving pipeline hygiene and monthly review attendance.",
+    "imageUrl": "https://i.pravatar.cc/150?img=12"
+  },
+  {
+    "id": "PR003",
+    "fullName": "Priya Nair",
+    "email": "priya.nair@contoso.com",
+    "jobTitle": "Marketing Specialist",
+    "department": "Marketing",
+    "startDate": "2026-03-01",
+    "endDate": "2026-09-01",
+    "status": "In Progress",
+    "notes": "Building confidence quickly and already contributing to campaign planning.",
+    "imageUrl": "https://i.pravatar.cc/150?img=47"
+  },
+  {
+    "id": "PR004",
+    "fullName": "Michael Bennett",
+    "email": "michael.bennett@contoso.com",
+    "jobTitle": "Financial Analyst",
+    "department": "Finance",
+    "startDate": "2026-01-08",
+    "endDate": "2026-07-08",
+    "status": "Completed",
+    "notes": "Successfully completed probation with strong delivery against all core goals.",
+    "imageUrl": "https://i.pravatar.cc/150?img=15"
+  },
+  {
+    "id": "PR005",
+    "fullName": "Emily Carter",
+    "email": "emily.carter@contoso.com",
+    "jobTitle": "Operations Coordinator",
+    "department": "Operations",
+    "startDate": "2026-02-17",
+    "endDate": "2026-08-17",
+    "status": "Extended",
+    "notes": "Performance is improving, but probation was extended to allow more coaching time.",
+    "imageUrl": "https://i.pravatar.cc/150?img=24"
+  }
+]
