@@ -1,0 +1,136 @@
+### Probation Tracker MCP — debug HTTP tests
+### Use with the VS Code "REST Client" (humao.rest-client) extension.
+### Press the "Send Request" link above each request.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Variables
+# ─────────────────────────────────────────────────────────────────────────────
+@tunnelMcp     = https://f0r8gwwh-3001.uks1.devtunnels.ms/mcp
+@localMcp      = http://localhost:3001/mcp
+@tenantId      = 0c2614e6-a76a-433c-80fd-88ac91e67b9d
+
+# App registration (calendar plugin uses SSO via TDP; secret only needed for OBO server-side, not here)
+@clientId      = 54881055-411d-41b2-8f25-f1312a1abfe6
+
+# Common headers (MCP Streamable HTTP)
+@accept        = application/json, text/event-stream
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 1 — Local probation MCP server (no auth)
+# ═════════════════════════════════════════════════════════════════════════════
+
+### 1.1 Health probe (root)
+GET http://localhost:3001/
+
+### 1.2 initialize (REQUIRED first call per MCP spec)
+# @name probLocalInit
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 1.3 tools/list
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 1.4 resources/list (should return 3 ui://probation/*.html resources)
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{ "jsonrpc": "2.0", "id": 3, "method": "resources/list" }
+
+### 1.5 tools/call → show-probation-dashboard (no filters)
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 4, "method": "tools/call",
+  "params": {
+    "name": "show-probation-dashboard",
+    "arguments": {}
+  }
+}
+
+### 1.6 tools/call → show-probationer-detail by name
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 5, "method": "tools/call",
+  "params": {
+    "name": "show-probationer-detail",
+    "arguments": { "name": "Sarah" }
+  }
+}
+
+### 1.7 tools/call → show-probation-reports
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 6, "method": "tools/call",
+  "params": { "name": "show-probation-reports", "arguments": {} }
+}
+
+### 1.8 Read a UI resource
+POST {{localMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 7, "method": "resources/read",
+  "params": { "uri": "ui://probation/dashboard.html" }
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 2 — Same probation MCP through the dev tunnel
+# (what M365 Copilot actually hits)
+# ═════════════════════════════════════════════════════════════════════════════
+
+### 2.1 initialize through tunnel
+POST {{tunnelMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 1, "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 2.2 tools/list through tunnel
+POST {{tunnelMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 2.3 dashboard through tunnel
+POST {{tunnelMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+  "params": { "name": "show-probation-dashboard", "arguments": {} }
+}

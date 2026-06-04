@@ -11,10 +11,14 @@
   },
   "dependencies": {
     "@azure/data-tables": "^13.3.0",
+    "@azure/msal-node": "^5.2.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@modelcontextprotocol/ext-apps": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2",
+    "isomorphic-fetch": "^3.0.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {

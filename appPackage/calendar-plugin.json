@@ -1,0 +1,79 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "Calendar (Outlook via Graph)",
+    "description_for_human": "Read and manage the signed-in user's Outlook calendar using Microsoft Graph through a local MCP server with on-behalf-of authentication.",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "calendar",
+    "functions": [
+        {
+            "name": "ListEvents",
+            "description": "Retrieve a list of calendar events for the signed-in user with start/end datetime, title, attendees. Use this when the user asks about their schedule, upcoming meetings, or events on a specific date."
+        },
+        {
+            "name": "ListCalendarView",
+            "description": "Retrieve calendar events in a window with recurring meetings expanded into individual instances. Prefer over ListEvents when showing a day/week view."
+        },
+        {
+            "name": "CreateEvent",
+            "description": "Create a new calendar event in the signed-in user's Outlook calendar. Supports attendees, Teams online meetings, recurrence, location."
+        },
+        {
+            "name": "UpdateEvent",
+            "description": "Update an existing calendar event by ID. Can change subject, time, attendees, body, etc."
+        },
+        {
+            "name": "DeleteEventById",
+            "description": "Delete a calendar event by its ID. Use when the organizer wants to remove an event without notifying attendees."
+        },
+        {
+            "name": "CancelEvent",
+            "description": "Cancel a calendar event as the organizer and notify all attendees."
+        },
+        {
+            "name": "FindMeetingTimes",
+            "description": "Suggest available meeting times for the signed-in user and a list of attendees based on free/busy availability."
+        },
+        {
+            "name": "AcceptEvent",
+            "description": "Accept a calendar event invitation. Optionally include a comment and choose whether to send a response."
+        },
+        {
+            "name": "TentativelyAcceptEvent",
+            "description": "Tentatively accept a calendar event invitation."
+        },
+        {
+            "name": "DeclineEvent",
+            "description": "Decline a calendar event invitation."
+        },
+        {
+            "name": "WhoAmI",
+            "description": "Returns the signed-in user's name, UPN, and tenant. Use to verify the OBO + Graph auth chain is working."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "${{MCP_SERVER_URL}}/calendar-mcp"
+            },
+            "run_for_functions": [
+                "ListEvents",
+                "ListCalendarView",
+                "CreateEvent",
+                "UpdateEvent",
+                "DeleteEventById",
+                "CancelEvent",
+                "FindMeetingTimes",
+                "AcceptEvent",
+                "TentativelyAcceptEvent",
+                "DeclineEvent",
+                "WhoAmI"
+            ],
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
+            }
+        }
+    ]
+}

@@ -1,10 +1,13 @@
 import { TableClient } from "@azure/data-tables";
 
-const CONNECTION_STRING =
-  process.env.AZURE_STORAGE_CONNECTION_STRING ??
+const AZURITE_CONNECTION_STRING =
   "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;";
 
-const opts = { allowInsecureConnection: true };
+const CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING ?? AZURITE_CONNECTION_STRING;
+
+// Allow insecure (HTTP) only when targeting Azurite locally.
+const isAzurite = /devstoreaccount1/i.test(CONNECTION_STRING) || /127\.0\.0\.1|localhost/i.test(CONNECTION_STRING);
+const opts = isAzurite ? { allowInsecureConnection: true } : {};
 
 export const probationersTable = TableClient.fromConnectionString(CONNECTION_STRING, "Probationers", opts);
 export const objectivesTable = TableClient.fromConnectionString(CONNECTION_STRING, "Objectives", opts);

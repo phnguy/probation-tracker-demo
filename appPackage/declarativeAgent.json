@@ -15,12 +15,24 @@
         {
             "title": "Probation reports",
             "text": "Show me probation reports"
+        },
+        {
+            "title": "This week's reviews",
+            "text": "What probation reviews do I have on my calendar this week?"
+        },
+        {
+            "title": "Schedule a check-in",
+            "text": "Schedule a 30-minute check-in with Sarah Martinez next Tuesday at 2pm"
         }
     ],
     "actions": [
         {
-            "id": "action_1",
-            "file": "ai-plugin.json"
+            "id": "probation",
+            "file": "probation-plugin.json"
+        },
+        {
+            "id": "calendar",
+            "file": "calendar-plugin.json"
         }
     ]
 }

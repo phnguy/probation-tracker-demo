@@ -1,8 +1,8 @@
 {
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
     "schema_version": "v2.4",
-    "name_for_human": "probation-tracker",
-    "description_for_human": "probation-tracker${{APP_NAME_SUFFIX}}",
+    "name_for_human": "Probation Tracker",
+    "description_for_human": "Probation tracking dashboards, probationer details, and analytics reports.",
     "contact_email": "publisher-email@example.com",
     "namespace": "probationtracker",
     "functions": [

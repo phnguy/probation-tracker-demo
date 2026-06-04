@@ -24,28 +24,70 @@ _Interactive dashboards, detail views, and analytics — rendered inline in Copi
 | 📊 **Dashboard** | Overview of every probationer with search, department/status filters, progress bars, and quick-action cards. |
 | 👤 **Probationer Detail** | Per-person view with objectives, monthly check-ins, timeline and notes. |
 | 📈 **Reports** | Status distribution, department breakdown, objective/check-in stats, and upcoming reviews. |
+| 📅 **Calendar** | Read & manage the signed-in manager's Outlook calendar — list events, find meeting times, book/update/cancel probation check-ins. |
 
-All three views are **interactive HTML widgets** built with React + Fluent UI, served by an MCP server, and rendered inline in the Copilot chat canvas.
+The probation views are **interactive HTML widgets** built with React + Fluent UI, served by an MCP server, and rendered inline in the Copilot chat canvas. The calendar tools talk to Microsoft Graph via on-behalf-of (OBO) auth.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────┐        ┌────────────────────┐        ┌───────────────────┐
-│  M365 Copilot       │  MCP   │  Probation Tracker │  TS    │  Azurite Tables   │
-│  Declarative Agent  │◄──────►│  MCP Server        │◄──────►│  (local dev)      │
-│  (manifest + DA)    │ (HTTP) │  + Widget Resources│        │                   │
-└─────────────────────┘        └────────────────────┘        └───────────────────┘
-        ▲                              │
-        │ inline widget                │ ui://probation/dashboard.html
-        │ (iframe)                     │ ui://probation/detail.html
-        └──────────────────────────────┘ ui://probation/reports.html
+┌─────────────────────┐
+│  M365 Copilot       │
+│  Declarative Agent  │   single agent, two plugin actions
+│  ┌───────────────┐  │
+│  │ probation     │──┼──── HTTP POST ──────┐
+│  │ plugin        │  │   (no auth)         │
+│  └───────────────┘  │                     │
+│  ┌───────────────┐  │                     │
+│  │ calendar      │──┼──── HTTP POST ──────┤
+│  │ plugin        │  │   (Bearer SSO)      │
+│  └───────────────┘  │                     │
+└─────────────────────┘                     │
+                                            ▼
+                       ┌─────────────────────────────────────────┐
+                       │   Probation Tracker MCP Server  :3001   │
+                       │   (single Node/Express process)         │
+                       │                                         │
+                       │   ┌──────────────┐    ┌──────────────┐  │
+                       │   │  /mcp        │    │ /calendar-mcp│  │
+                       │   │  no auth     │    │  Bearer +    │  │
+                       │   │              │    │  OBO middlew.│  │
+                       │   └──────┬───────┘    └──────┬───────┘  │
+                       └──────────┼───────────────────┼──────────┘
+                                  │                   │
+                ┌─────────────────┘                   └────────────────┐
+                ▼                                                      ▼
+        ┌──────────────────┐                              ┌────────────────────┐
+        │  Azurite Tables  │                              │  Microsoft Graph   │
+        │  probationers /  │                              │  /me/events        │
+        │  objectives /    │                              │  /me/findMeeting…  │
+        │  check-ins       │                              │  /me/calendarView  │
+        └──────────────────┘                              └────────────────────┘
+
+        ▲                                                          ▲
+        │ widgets render inline                                    │
+        │ ui://probation/dashboard.html                            │ token: signed-in
+        │ ui://probation/detail.html                               │ manager's identity
+        │ ui://probation/reports.html                              │ (delegated)
 ```
+
+**Key point:** it's **one MCP server** exposing **two endpoints** in the same Node process — not two servers. The endpoints differ only by URL path and auth posture; they share the dev tunnel, lifecycle, and deployment.
+
+**One MCP server process, two endpoints:**
+
+| Endpoint | Auth | Tools | Plugin |
+|---|---|---|---|
+| `/mcp` | none (anonymous) | `show-probation-dashboard`, `show-probationer-detail`, `show-probation-reports` | `probation-plugin.json` |
+| `/calendar-mcp` | Bearer (Entra SSO → OBO → Graph) | `ListEvents`, `ListCalendarView`, `FindMeetingTimes`, `CreateEvent`, `UpdateEvent`, `DeleteEventById`, `CancelEvent`, `AcceptEvent`, `TentativelyAcceptEvent`, `DeclineEvent`, `WhoAmI` | `calendar-plugin.json` |
+
+Both plugins are wired into a single declarative agent (`declarativeAgent.json` → 2 actions) so Copilot can mix tools from both in a single conversation (e.g. "Show me at-risk probationers and book a check-in with each one").
 
 - **Server:** Express + `@modelcontextprotocol/sdk` (Streamable HTTP transport) + `@modelcontextprotocol/ext-apps/server`
 - **Widgets:** React 18 + Fluent UI 9, bundled into single‑file HTML by Vite + `vite-plugin-singlefile`
 - **Storage:** Azure Tables via `@azure/data-tables` (Azurite locally, real Azure in production)
+- **Calendar auth:** Entra SSO from Copilot → server validates Bearer → MSAL OBO swap → Graph delegated calls (`Calendars.ReadWrite`, `MailboxSettings.Read`, `User.Read`)
 - **Host bridge:** `@modelcontextprotocol/ext-apps/react` (`useApp`) handles the `ui/initialize` handshake and forwards tool results into the widget
 
 ---
@@ -56,8 +98,9 @@ All three views are **interactive HTML widgets** built with React + Fluent UI, s
 probation-tracker/
 ├── appPackage/
 │   ├── manifest.json            # Teams app manifest
-│   ├── declarativeAgent.json    # M365 Copilot declarative agent
-│   ├── ai-plugin.json           # Tool catalog (RemoteMCPServer)
+│   ├── declarativeAgent.json    # Agent definition (references 2 plugins)
+│   ├── probation-plugin.json    # Probation tools (MCP /mcp, no auth)
+│   ├── calendar-plugin.json     # Calendar tools (MCP /calendar-mcp, SSO+OBO)
 │   └── instruction.txt          # System prompt for the agent
 ├── env/
 │   └── .env.dev.sample          # Template for env files
@@ -121,10 +164,19 @@ teamsapp provision --env local
 
 Once provisioned, open the **probation-tracker (local)** agent in M365 Copilot and try:
 
+**Probation views:**
 - _"Show me the probation dashboard"_
 - _"Show details for Sarah Martinez"_
 - _"Show me probation reports"_
 - _"Who's at risk in Engineering?"_
+
+**Calendar (signed-in manager):**
+- _"What's on my calendar today?"_
+- _"Find a 30-minute slot with sarah@contoso.com this week"_
+- _"Book a probation check-in with Sarah next Tuesday at 2pm"_
+
+**Combined (the point of one agent):**
+- _"Find at-risk probationers and book a 30-minute check-in with each of them this week"_
 
 ---
 
