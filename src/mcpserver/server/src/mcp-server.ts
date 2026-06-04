@@ -290,5 +290,197 @@ export function createMcpServer(): McpServer {
     };
   });
 
+  registerAppTool(server, "add-probationer", {
+    title: "Add Probationer",
+    description: "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
+    inputSchema: {
+      fullName: z.string().describe("Full name of the probationer (required)."),
+      email: z.string().describe("Work email of the probationer (required)."),
+      jobTitle: z.string().optional().describe("Job title, e.g. 'Software Engineer'."),
+      department: z.string().optional().describe("Department, e.g. 'Engineering', 'Sales', 'Marketing'."),
+      startDate: z.string().optional().describe("Probation start date as YYYY-MM-DD. Defaults to today."),
+      endDate: z.string().optional().describe("Probation end date as YYYY-MM-DD. Defaults to 6 months after startDate."),
+      status: z.string().optional().describe("Status. One of: 'In Progress' (default), 'At Risk', 'Completed', 'Extended', 'Failed'."),
+      notes: z.string().optional().describe("Free-text notes (e.g. onboarding context)."),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+    _meta: { ui: { resourceUri: DASHBOARD_URI } },
+  }, async ({ fullName, email, jobTitle, department, startDate, endDate, status, notes }): Promise<CallToolResult> => {
+    const created = await db.createProbationer({ fullName, email, jobTitle, department, startDate, endDate, status, notes });
+    const probationers = await db.getAllProbationers();
+    const allCheckIns = await db.getAllCheckIns();
+    const allObjectives = await db.getAllObjectives();
+    const enriched = probationers.map(p => {
+      const pCheckIns = allCheckIns.filter(c => c.probationerId === p.id);
+      const pObjectives = allObjectives.filter(o => o.probationerId === p.id);
+      const derivedStatus = getDerivedStatus(p, pCheckIns);
+      return {
+        ...p,
+        derivedStatus,
+        statusLabel: getStatusLabel(derivedStatus),
+        statusColor: getStatusColor(derivedStatus),
+        timelineProgress: getTimelineProgress(p),
+        daysRemaining: getDaysRemaining(p),
+        currentMonth: getCurrentMonth(p),
+        completedCheckIns: pCheckIns.filter(c => c.status === "Completed").length,
+        totalCheckIns: 6,
+        objectivesCompleted: pObjectives.filter(o => o.status === "Completed").length,
+        totalObjectives: pObjectives.length,
+      };
+    });
+    const stats = {
+      active: enriched.filter(p => p.derivedStatus === "on-track").length,
+      atRisk: enriched.filter(p => ["attention", "overdue"].includes(p.derivedStatus)).length,
+      reviewsDueSoon: enriched.filter(p => p.daysRemaining <= 30 && !["passed", "failed"].includes(p.derivedStatus)).length,
+      completed: enriched.filter(p => p.derivedStatus === "passed").length,
+    };
+    const allDepartments = [...new Set(probationers.map(p => p.department))].sort();
+    const allStatuses = [...new Set(probationers.map(p => p.status))].sort();
+    return {
+      content: [{ type: "text", text: `Added probationer ${created.fullName} (${created.id}). Probation period: ${created.startDate} → ${created.endDate}. Total probationers: ${enriched.length}.` }],
+      structuredContent: { created, stats, probationers: enriched, allDepartments, allStatuses },
+    };
+  });
+
+  registerAppTool(server, "update-probationer", {
+    title: "Update Probationer",
+    description: "Update fields on an existing probationer (profile, dates, status, notes). Pass only the fields you want to change.",
+    inputSchema: {
+      probationer_id: z.string().optional().describe("Probationer ID (e.g. 'PR001'). Provide this OR name."),
+      name: z.string().optional().describe("Full or partial name to locate the probationer if probationer_id is not provided."),
+      fullName: z.string().optional(),
+      email: z.string().optional(),
+      jobTitle: z.string().optional(),
+      department: z.string().optional(),
+      startDate: z.string().optional().describe("YYYY-MM-DD"),
+      endDate: z.string().optional().describe("YYYY-MM-DD. Use to extend probation."),
+      status: z.string().optional().describe("'In Progress', 'At Risk', 'Completed', 'Extended', 'Failed'."),
+      notes: z.string().optional(),
+    },
+    annotations: { readOnlyHint: false, idempotentHint: true },
+    _meta: { ui: { resourceUri: DETAIL_URI } },
+  }, async ({ probationer_id, name, ...patch }): Promise<CallToolResult> => {
+    let target: db.ProbationerEntity | null = null;
+    if (probationer_id) target = await db.getProbationerById(probationer_id);
+    if (!target && name) {
+      const all = await db.getAllProbationers();
+      const n = name.toLowerCase();
+      target = all.find(p => p.fullName.toLowerCase().includes(n)) ?? null;
+    }
+    if (!target) return { content: [{ type: "text", text: "Probationer not found." }], isError: true };
+
+    const cleanPatch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
+    const updated = await db.updateProbationer(target.id, cleanPatch);
+    if (!updated) return { content: [{ type: "text", text: "Update failed." }], isError: true };
+
+    const objectives = await db.getObjectivesByProbationerId(updated.id);
+    const checkIns = await db.getCheckInsByProbationerId(updated.id);
+    const derivedStatus = getDerivedStatus(updated, checkIns);
+    const enriched = {
+      ...updated,
+      derivedStatus,
+      statusLabel: getStatusLabel(derivedStatus),
+      statusColor: getStatusColor(derivedStatus),
+      timelineProgress: getTimelineProgress(updated),
+      daysRemaining: getDaysRemaining(updated),
+      currentMonth: getCurrentMonth(updated),
+    };
+    const changed = Object.keys(cleanPatch).join(", ") || "(no fields)";
+    return {
+      content: [{ type: "text", text: `Updated ${updated.fullName} (${updated.id}). Changed: ${changed}. Status: ${getStatusLabel(derivedStatus)}.` }],
+      structuredContent: { probationer: enriched, objectives, checkIns },
+    };
+  });
+
+  registerAppTool(server, "upsert-objective", {
+    title: "Add or Update Objective",
+    description: "Create a new objective for a probationer, or update an existing one if objective_id is passed.",
+    inputSchema: {
+      probationer_id: z.string().optional().describe("Probationer ID. Provide this OR probationer_name."),
+      probationer_name: z.string().optional().describe("Probationer name to look up if probationer_id is not provided."),
+      objective_id: z.string().optional().describe("Existing objective ID to update. Omit to create a new one."),
+      objective: z.string().describe("Short title of the objective."),
+      description: z.string().optional().describe("Longer description / acceptance criteria."),
+      targetDate: z.string().optional().describe("YYYY-MM-DD target completion date."),
+      status: z.string().optional().describe("'Not Started' (default), 'In Progress', 'Completed', 'Blocked'."),
+      progress: z.number().int().min(0).max(100).optional().describe("Percent complete 0-100."),
+    },
+    annotations: { readOnlyHint: false, idempotentHint: false },
+    _meta: { ui: { resourceUri: DETAIL_URI } },
+  }, async ({ probationer_id, probationer_name, objective_id, objective, description, targetDate, status, progress }): Promise<CallToolResult> => {
+    let target: db.ProbationerEntity | null = null;
+    if (probationer_id) target = await db.getProbationerById(probationer_id);
+    if (!target && probationer_name) {
+      const all = await db.getAllProbationers();
+      const n = probationer_name.toLowerCase();
+      target = all.find(p => p.fullName.toLowerCase().includes(n)) ?? null;
+    }
+    if (!target) return { content: [{ type: "text", text: "Probationer not found." }], isError: true };
+
+    const saved = await db.upsertObjective({ id: objective_id, probationerId: target.id, objective, description, targetDate, status, progress });
+    const objectives = await db.getObjectivesByProbationerId(target.id);
+    const checkIns = await db.getCheckInsByProbationerId(target.id);
+    const derivedStatus = getDerivedStatus(target, checkIns);
+    const enriched = {
+      ...target,
+      derivedStatus,
+      statusLabel: getStatusLabel(derivedStatus),
+      statusColor: getStatusColor(derivedStatus),
+      timelineProgress: getTimelineProgress(target),
+      daysRemaining: getDaysRemaining(target),
+      currentMonth: getCurrentMonth(target),
+    };
+    const verb = objective_id ? "Updated" : "Added";
+    return {
+      content: [{ type: "text", text: `${verb} objective for ${target.fullName} (${target.id}): "${saved.objective}" — ${saved.status} (${saved.progress}%).` }],
+      structuredContent: { probationer: enriched, objectives, checkIns, savedObjective: saved },
+    };
+  });
+
+  registerAppTool(server, "log-check-in", {
+    title: "Log Monthly Check-In",
+    description: "Record or update a monthly check-in for a probationer (rating, notes, completion). Use this after a 1:1 to capture how it went.",
+    inputSchema: {
+      probationer_id: z.string().optional().describe("Probationer ID. Provide this OR probationer_name."),
+      probationer_name: z.string().optional().describe("Probationer name to look up if probationer_id is not provided."),
+      checkInNumber: z.number().int().min(1).max(6).describe("Which monthly check-in (1-6)."),
+      status: z.string().optional().describe("'Scheduled', 'Completed', 'Missed'. Defaults to 'Completed' if completedDate is given, else 'Scheduled'."),
+      scheduledDate: z.string().optional().describe("YYYY-MM-DD."),
+      completedDate: z.string().optional().describe("YYYY-MM-DD. When set, status defaults to 'Completed'."),
+      overallRating: z.string().optional().describe("'Exceeding', 'Meeting', 'Below', 'At Risk'."),
+      notes: z.string().optional().describe("Notes from the conversation."),
+    },
+    annotations: { readOnlyHint: false, idempotentHint: true },
+    _meta: { ui: { resourceUri: DETAIL_URI } },
+  }, async ({ probationer_id, probationer_name, checkInNumber, status, scheduledDate, completedDate, overallRating, notes }): Promise<CallToolResult> => {
+    let target: db.ProbationerEntity | null = null;
+    if (probationer_id) target = await db.getProbationerById(probationer_id);
+    if (!target && probationer_name) {
+      const all = await db.getAllProbationers();
+      const n = probationer_name.toLowerCase();
+      target = all.find(p => p.fullName.toLowerCase().includes(n)) ?? null;
+    }
+    if (!target) return { content: [{ type: "text", text: "Probationer not found." }], isError: true };
+
+    const effectiveStatus = status ?? (completedDate ? "Completed" : undefined);
+    const saved = await db.upsertCheckIn({ probationerId: target.id, checkInNumber, status: effectiveStatus, scheduledDate, completedDate, overallRating, notes });
+    const objectives = await db.getObjectivesByProbationerId(target.id);
+    const checkIns = await db.getCheckInsByProbationerId(target.id);
+    const derivedStatus = getDerivedStatus(target, checkIns);
+    const enriched = {
+      ...target,
+      derivedStatus,
+      statusLabel: getStatusLabel(derivedStatus),
+      statusColor: getStatusColor(derivedStatus),
+      timelineProgress: getTimelineProgress(target),
+      daysRemaining: getDaysRemaining(target),
+      currentMonth: getCurrentMonth(target),
+    };
+    return {
+      content: [{ type: "text", text: `Logged Month ${saved.checkInNumber} check-in for ${target.fullName} (${target.id}) — ${saved.status}${saved.overallRating ? `, ${saved.overallRating}` : ""}.` }],
+      structuredContent: { probationer: enriched, objectives, checkIns, savedCheckIn: saved },
+    };
+  });
+
   return server;
 }

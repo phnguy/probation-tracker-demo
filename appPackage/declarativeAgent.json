@@ -1,5 +1,5 @@
 {
-    "version": "v1.6",
+    "version": "v1.7",
     "name": "probation-tracker${{APP_NAME_SUFFIX}}",
     "description": "Line manager tool for tracking new hire probationers through objectives and monthly check-ins",
     "instructions": "$[file('instruction.txt')]",
@@ -23,6 +23,18 @@
         {
             "title": "Schedule a check-in",
             "text": "Schedule a 30-minute check-in with Sarah Martinez next Tuesday at 2pm"
+        },
+        {
+            "title": "Who is my probationer?",
+            "text": "Tell me about Sarah Martinez — her role, manager and recent work"
+        }
+    ],
+    "capabilities": [
+        {
+            "name": "People"
+        },
+        {
+            "name": "Email"
         }
     ],
     "actions": [

@@ -17,6 +17,22 @@
         {
             "name": "show-probation-reports",
             "description": "Displays probation analytics with status distribution, department breakdown, objective/check-in stats, and upcoming reviews."
+        },
+        {
+            "name": "add-probationer",
+            "description": "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate, endDate, status, notes. Returns the updated dashboard with the new probationer included."
+        },
+        {
+            "name": "update-probationer",
+            "description": "Update fields on an existing probationer (profile, dates, status, notes). Identify by probationer_id or name."
+        },
+        {
+            "name": "upsert-objective",
+            "description": "Add a new objective for a probationer, or update an existing one if objective_id is provided. Identify probationer by probationer_id or probationer_name."
+        },
+        {
+            "name": "log-check-in",
+            "description": "Record or update a monthly check-in (1-6) for a probationer — status, completion date, overall rating, and notes."
         }
     ],
     "runtimes": [
@@ -97,6 +113,115 @@
                                 "ui": { "resourceUri": "ui://probation/reports.html" },
                                 "ui/resourceUri": "ui://probation/reports.html"
                             }
+                        },
+                        {
+                            "name": "add-probationer",
+                            "title": "Add Probationer",
+                            "description": "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "fullName": { "type": "string", "description": "Full name of the probationer (required)." },
+                                    "email": { "type": "string", "description": "Work email of the probationer (required)." },
+                                    "jobTitle": { "type": "string", "description": "Job title, e.g. 'Software Engineer'." },
+                                    "department": { "type": "string", "description": "Department, e.g. 'Engineering', 'Sales', 'Marketing'." },
+                                    "startDate": { "type": "string", "description": "Probation start date as YYYY-MM-DD. Defaults to today." },
+                                    "endDate": { "type": "string", "description": "Probation end date as YYYY-MM-DD. Defaults to 6 months after startDate." },
+                                    "status": { "type": "string", "description": "Status. One of: 'In Progress' (default), 'At Risk', 'Completed', 'Extended', 'Failed'." },
+                                    "notes": { "type": "string", "description": "Free-text notes." }
+                                },
+                                "required": ["fullName", "email"],
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/dashboard.html" },
+                                "ui/resourceUri": "ui://probation/dashboard.html"
+                            }
+                        },
+                        {
+                            "name": "update-probationer",
+                            "title": "Update Probationer",
+                            "description": "Update fields on an existing probationer (profile, dates, status, notes). Pass only fields to change. Identify by probationer_id or name.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "probationer_id": { "type": "string", "description": "Probationer ID (e.g. 'PR001'). Provide this OR name." },
+                                    "name": { "type": "string", "description": "Full or partial name (case-insensitive) if probationer_id is not provided." },
+                                    "fullName": { "type": "string" },
+                                    "email": { "type": "string" },
+                                    "jobTitle": { "type": "string" },
+                                    "department": { "type": "string" },
+                                    "startDate": { "type": "string", "description": "YYYY-MM-DD." },
+                                    "endDate": { "type": "string", "description": "YYYY-MM-DD. Use to extend probation." },
+                                    "status": { "type": "string", "description": "'In Progress', 'At Risk', 'Completed', 'Extended', 'Failed'." },
+                                    "notes": { "type": "string" }
+                                },
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": false, "idempotentHint": true },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/detail.html" },
+                                "ui/resourceUri": "ui://probation/detail.html"
+                            }
+                        },
+                        {
+                            "name": "upsert-objective",
+                            "title": "Add or Update Objective",
+                            "description": "Create a new objective for a probationer, or update an existing one if objective_id is passed.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "probationer_id": { "type": "string", "description": "Probationer ID. Provide this OR probationer_name." },
+                                    "probationer_name": { "type": "string", "description": "Probationer name to look up if probationer_id is not provided." },
+                                    "objective_id": { "type": "string", "description": "Existing objective ID to update. Omit to create new." },
+                                    "objective": { "type": "string", "description": "Short title of the objective." },
+                                    "description": { "type": "string", "description": "Longer description / acceptance criteria." },
+                                    "targetDate": { "type": "string", "description": "YYYY-MM-DD target completion date." },
+                                    "status": { "type": "string", "description": "'Not Started' (default), 'In Progress', 'Completed', 'Blocked'." },
+                                    "progress": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Percent complete 0-100." }
+                                },
+                                "required": ["objective"],
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": false, "idempotentHint": false },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/detail.html" },
+                                "ui/resourceUri": "ui://probation/detail.html"
+                            }
+                        },
+                        {
+                            "name": "log-check-in",
+                            "title": "Log Monthly Check-In",
+                            "description": "Record or update a monthly check-in for a probationer (rating, notes, completion). Use this after a 1:1.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "probationer_id": { "type": "string", "description": "Probationer ID. Provide this OR probationer_name." },
+                                    "probationer_name": { "type": "string", "description": "Probationer name to look up if probationer_id is not provided." },
+                                    "checkInNumber": { "type": "integer", "minimum": 1, "maximum": 6, "description": "Which monthly check-in (1-6)." },
+                                    "status": { "type": "string", "description": "'Scheduled', 'Completed', 'Missed'. Defaults to 'Completed' if completedDate is given." },
+                                    "scheduledDate": { "type": "string", "description": "YYYY-MM-DD." },
+                                    "completedDate": { "type": "string", "description": "YYYY-MM-DD. When set, status defaults to 'Completed'." },
+                                    "overallRating": { "type": "string", "description": "'Exceeding', 'Meeting', 'Below', 'At Risk'." },
+                                    "notes": { "type": "string", "description": "Notes from the conversation." }
+                                },
+                                "required": ["checkInNumber"],
+                                "additionalProperties": false,
+                                "$schema": "http://json-schema.org/draft-07/schema#"
+                            },
+                            "annotations": { "readOnlyHint": false, "idempotentHint": true },
+                            "execution": { "taskSupport": "forbidden" },
+                            "_meta": {
+                                "ui": { "resourceUri": "ui://probation/detail.html" },
+                                "ui/resourceUri": "ui://probation/detail.html"
+                            }
                         }
                     ]
                 }
@@ -104,7 +229,11 @@
             "run_for_functions": [
                 "show-probation-dashboard",
                 "show-probationer-detail",
-                "show-probation-reports"
+                "show-probation-reports",
+                "add-probationer",
+                "update-probationer",
+                "upsert-objective",
+                "log-check-in"
             ],
             "auth": {
                 "type": "None"
