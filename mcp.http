@@ -125,12 +125,111 @@ Content-Type: application/json
 
 { "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
 
-### 2.3 dashboard through tunnel
-POST {{tunnelMcp}}
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 3 — Work IQ Calendar MCP (1P Microsoft service, requires SSO)
+# ─────────────────────────────────────────────────────────────────────────────
+# The plugin URL Copilot calls. Auth uses Microsoft Entra SSO — Work IQ
+# needs a DELEGATED user token (it acts as the signed-in user), so we use
+# the OAuth 2.0 device code flow. Client credentials would NOT work since
+# the calendar is per-user.
+#
+# Flow:
+#   1. "Send Request" on `### 3.0 Request a device code`.
+#   2. Open the verification_uri shown in the response (https://microsoft.com/devicelogin)
+#      and enter the user_code.
+#   3. After signing in, "Send Request" on `### 3.0b Poll for the token`
+#      (re-send if it returns "authorization_pending").
+#   4. Fire 3.1, 3.2, 3.3 etc. — they reference {{token.response.body.access_token}}.
+#
+# Alternative — paste a token from `az account get-access-token`:
+#   az login --tenant 0c2614e6-a76a-433c-80fd-88ac91e67b9d
+#   az account get-access-token --resource "https://agent365.svc.cloud.microsoft" --query accessToken -o tsv
+#   Replace @workiqToken below with the literal eyJ... value.
+# ═════════════════════════════════════════════════════════════════════════════
+
+@workiqMcp     = https://agent365.svc.cloud.microsoft/agents/tenants/{{tenantId}}/servers/mcp_CalendarTools
+@workiqResource = https://agent365.svc.cloud.microsoft
+@workiqScope   = {{workiqResource}}/.default
+
+### 3.0-pre OAuth protected resource metadata (no auth required)
+# Tells MCP clients which Entra resource/scopes to request a token for.
+# Copilot uses this to discover auth automatically — so the plugin manifest
+# should NOT need to declare an `auth` block for first-party MCPs.
+GET {{workiqMcp}}/.well-known/oauth-protected-resource
+Accept: application/json
+
+### 3.0 Request a device code (delegated user flow)
+# @name devicecode
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/devicecode
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{clientId}}
+&scope={{workiqScope}} offline_access
+
+### 3.0b Poll for the token (run after signing in at the verification_uri)
+# @name token
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:device_code
+&client_id={{clientId}}
+&device_code={{devicecode.response.body.device_code}}
+
+### Reference the token captured above. To paste an az-CLI token instead,
+### replace this line with `@workiqToken = ey...`.
+@workiqToken   = {{token.response.body.access_token}}
+
+### 3.1 initialize (REQUIRED first call)
+# @name workiqInit
+POST {{workiqMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{workiqToken}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 3.2 tools/list — should return mcp_CalendarTools_graph_* tools
+POST {{workiqMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+Authorization: Bearer {{workiqToken}}
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 3.3 tools/call → mcp_CalendarTools_graph_listEvents (top 10)
+POST {{workiqMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+Authorization: Bearer {{workiqToken}}
 
 {
   "jsonrpc": "2.0", "id": 3, "method": "tools/call",
-  "params": { "name": "show-probation-dashboard", "arguments": {} }
+  "params": {
+    "name": "mcp_CalendarTools_graph_listEvents",
+    "arguments": { "top": 10 }
+  }
 }
+
+### 3.4 tools/call → mcp_CalendarTools_graph_findMeetingTimes (1-hour slot)
+POST {{workiqMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+Authorization: Bearer {{workiqToken}}
+
+{
+  "jsonrpc": "2.0", "id": 4, "method": "tools/call",
+  "params": {
+    "name": "mcp_CalendarTools_graph_findMeetingTimes",
+    "arguments": { "meetingDuration": "PT1H", "maxCandidates": 3 }
+  }
+}
+

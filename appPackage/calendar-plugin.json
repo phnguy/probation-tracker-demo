@@ -2,41 +2,41 @@
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
     "schema_version": "v2.4",
     "name_for_human": "Calendar (Work IQ)",
-    "description_for_human": "Read and manage the signed-in user's Outlook calendar via the Microsoft Work IQ Calendar MCP service.",
+    "description_for_human": "Read and manage the signed-in user's Outlook calendar via the Microsoft Work IQ Calendar MCP service (mcp_CalendarTools).",
     "contact_email": "publisher-email@example.com",
     "namespace": "calendar",
     "functions": [
         {
             "name": "ListEvents",
-            "description": "Retrieve a list of calendar events for the signed-in user with start/end datetime, title, attendees. Use this when the user asks about their schedule, upcoming meetings, or events on a specific date."
+            "description": "Retrieve a list of events for the user with given criteria — start/end datetimes, title, attendee emails. Returns only the master event for recurring meetings."
         },
         {
             "name": "ListCalendarView",
-            "description": "Retrieve calendar events in a window with recurring meetings expanded into individual instances. Prefer over ListEvents when showing a day/week view."
+            "description": "Retrieve calendar occurrences within a specified time range with recurring meetings expanded into individual instances. Prefer over ListEvents for day/week views."
         },
         {
             "name": "CreateEvent",
-            "description": "Create a new calendar event in the signed-in user's Outlook calendar. Supports attendees, Teams online meetings, recurrence, location."
+            "description": "Create a new calendar event. Supports recurring events, attendees, and online meetings. Set isOnlineMeeting=true and onlineMeetingProvider='teamsForBusiness' for Teams meetings."
         },
         {
             "name": "UpdateEvent",
-            "description": "Update an existing calendar event by ID. Can change subject, time, attendees, body, etc."
+            "description": "Update an existing calendar event by ID. Can change subject, body, start, end, location, attendees, recurrence."
         },
         {
             "name": "DeleteEventById",
-            "description": "Delete a calendar event by its ID. Use when the organizer wants to remove an event without notifying attendees."
+            "description": "Delete a calendar event by ID without notifying attendees."
         },
         {
             "name": "CancelEvent",
             "description": "Cancel a calendar event as the organizer and notify all attendees."
         },
         {
-            "name": "FindMeetingTimes",
-            "description": "Suggest available meeting times for the signed-in user and a list of attendees based on free/busy availability."
+            "name": "ForwardEvent",
+            "description": "Forward a calendar event to additional attendees."
         },
         {
             "name": "AcceptEvent",
-            "description": "Accept a calendar event invitation. Optionally include a comment and choose whether to send a response."
+            "description": "Accept a calendar event invitation. Optional comment + sendResponse."
         },
         {
             "name": "TentativelyAcceptEvent",
@@ -47,8 +47,28 @@
             "description": "Decline a calendar event invitation."
         },
         {
-            "name": "WhoAmI",
-            "description": "Returns the signed-in user's name, UPN, and tenant. Use to verify the auth chain is working."
+            "name": "FindMeetingTimes",
+            "description": "Suggest meeting times based on organizer and attendee availability. meetingDuration is ISO 8601 (e.g. 'PT1H')."
+        },
+        {
+            "name": "GetRooms",
+            "description": "Get the list of bookable meeting rooms available to the signed-in user."
+        },
+        {
+            "name": "GetUserDateAndTimeZoneSettings",
+            "description": "Get the signed-in user's mailbox date format and preferred time zone — use to render datetimes in the user's locale."
+        },
+        {
+            "name": "GetOnlineMeetingAiInsights",
+            "description": "Get AI-generated insights (summary, action items) for a Teams online meeting after it has ended."
+        },
+        {
+            "name": "GetOnlineMeetingAttendanceReports",
+            "description": "Get attendance reports for a Teams online meeting (who joined, when, for how long)."
+        },
+        {
+            "name": "GetOnlineMeetingTranscripts",
+            "description": "Get the transcript of a Teams online meeting after it has ended."
         }
     ],
     "runtimes": [
@@ -64,13 +84,24 @@
                 "UpdateEvent",
                 "DeleteEventById",
                 "CancelEvent",
-                "FindMeetingTimes",
+                "ForwardEvent",
                 "AcceptEvent",
                 "TentativelyAcceptEvent",
                 "DeclineEvent",
-                "WhoAmI"
-            ]
+                "FindMeetingTimes",
+                "GetRooms",
+                "GetUserDateAndTimeZoneSettings",
+                "GetOnlineMeetingAiInsights",
+                "GetOnlineMeetingAttendanceReports",
+                "GetOnlineMeetingTranscripts"
+            ],
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
+            }
         }
     ]
 }
+
+
 
