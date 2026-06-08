@@ -1,8 +1,8 @@
 {
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
     "schema_version": "v2.4",
-    "name_for_human": "Calendar (Outlook via Graph)",
-    "description_for_human": "Read and manage the signed-in user's Outlook calendar using Microsoft Graph through a local MCP server with on-behalf-of authentication.",
+    "name_for_human": "Calendar (Work IQ)",
+    "description_for_human": "Read and manage the signed-in user's Outlook calendar via the Microsoft Work IQ Calendar MCP service.",
     "contact_email": "publisher-email@example.com",
     "namespace": "calendar",
     "functions": [
@@ -48,14 +48,14 @@
         },
         {
             "name": "WhoAmI",
-            "description": "Returns the signed-in user's name, UPN, and tenant. Use to verify the OBO + Graph auth chain is working."
+            "description": "Returns the signed-in user's name, UPN, and tenant. Use to verify the auth chain is working."
         }
     ],
     "runtimes": [
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "${{MCP_SERVER_URL}}/calendar-mcp"
+                "url": "https://agent365.svc.cloud.microsoft/agents/tenants/${{TEAMS_APP_TENANT_ID}}/servers/mcp_CalendarTools"
             },
             "run_for_functions": [
                 "ListEvents",
@@ -69,11 +69,8 @@
                 "TentativelyAcceptEvent",
                 "DeclineEvent",
                 "WhoAmI"
-            ],
-            "auth": {
-                "type": "OAuthPluginVault",
-                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
-            }
+            ]
         }
     ]
 }
+
