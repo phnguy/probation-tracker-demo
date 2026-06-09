@@ -13,6 +13,16 @@ param appServicePlanSku string = 'B1'
 @description('Node runtime version for the App Service')
 param nodeVersion string = 'NODE|22-lts'
 
+@description('Entra app (client) id used for OBO authentication')
+param aadAppClientId string
+
+@description('Entra app client secret used for OBO authentication')
+@secure()
+param aadAppClientSecret string
+
+@description('Microsoft 365 tenant id the agent is provisioned in')
+param teamsAppTenantId string
+
 var uniq = toLower(uniqueString(resourceGroup().id, baseName, envSuffix))
 var storageAccountName = take('st${baseName}${envSuffix}${uniq}', 24)
 var appServicePlanName = 'asp-${baseName}-${envSuffix}-${uniq}'
@@ -83,6 +93,9 @@ resource site 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'SCM_DO_BUILD_DURING_DEPLOYMENT', value: 'false' }
         { name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE', value: 'true' }
         { name: 'AZURE_STORAGE_CONNECTION_STRING', value: storageConnectionString }
+        { name: 'AAD_APP_CLIENT_ID', value: aadAppClientId }
+        { name: 'AAD_APP_CLIENT_SECRET', value: aadAppClientSecret }
+        { name: 'TEAMS_APP_TENANT_ID', value: teamsAppTenantId }
       ]
     }
   }
@@ -91,6 +104,8 @@ resource site 'Microsoft.Web/sites@2023-12-01' = {
 output appServiceName string = site.name
 output appServiceHostName string = site.properties.defaultHostName
 output appServiceUrl string = 'https://${site.properties.defaultHostName}'
+output mcpServerUrl string = 'https://${site.properties.defaultHostName}'
+output appServiceResourceId string = site.id
 output storageAccountName string = storage.name
 #disable-next-line outputs-should-not-contain-secrets
 output storageConnectionString string = storageConnectionString

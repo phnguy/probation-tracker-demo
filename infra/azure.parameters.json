@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": { "value": "probtrk" },
+    "envSuffix": { "value": "${{TEAMSFX_ENV}}" },
+    "appServicePlanSku": { "value": "F1" },
+    "aadAppClientId": { "value": "${{AAD_APP_CLIENT_ID}}" },
+    "aadAppClientSecret": { "value": "${{SECRET_AAD_APP_CLIENT_SECRET}}" },
+    "teamsAppTenantId": { "value": "${{TEAMS_APP_TENANT_ID}}" }
+  }
+}

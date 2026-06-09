@@ -3,6 +3,15 @@ version: v1.11
 environmentFolderPath: ./env
 
 provision:
+  - uses: arm/deploy
+    with:
+      subscriptionId: ${{AZURE_SUBSCRIPTION_ID}}
+      resourceGroupName: ${{AZURE_RESOURCE_GROUP_NAME}}
+      bicepCliVersion: v0.30.23
+      templates:
+        - path: ./infra/azure.bicep
+          parameters: ./infra/azure.parameters.json
+          deploymentName: probtrk-${{TEAMSFX_ENV}}
   - uses: teamsApp/create
     with:
       name: probation-tracker${{APP_NAME_SUFFIX}}
@@ -22,6 +31,32 @@ provision:
     writeToEnvironmentFile:
       titleId: M365_TITLE_ID
       appId: M365_APP_ID
+
+deploy:
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: src/mcpserver/server
+      args: install --no-audit --no-fund
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: src/mcpserver/server
+      args: run build
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: src/mcpserver/widgets
+      args: install --no-audit --no-fund
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: src/mcpserver/widgets
+      args: run build
+  - uses: script
+    with:
+      run: node infra/stage.mjs
+  - uses: azureAppService/zipDeploy
+    with:
+      artifactFolder: src/mcpserver/deploy-stage
+      ignoreFile: .deployignore
+      resourceId: ${{APPSERVICERESOURCEID}}
 
 publish:
   - uses: teamsApp/zipAppPackage

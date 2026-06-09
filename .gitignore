@@ -11,3 +11,5 @@ appPackage/.generated
 .azurite
 src/mcpserver/assets/
 dist/
+
+src/mcpserver/deploy-stage/
