@@ -38,7 +38,7 @@ The probation views are **interactive HTML widgets** built with React + Fluent U
 │  Declarative Agent  │   single agent, two plugin actions
 │  ┌───────────────┐  │
 │  │ probation     │──┼──── HTTP POST ──────┐
-│  │ plugin        │  │   (no auth)         │
+│  │ plugin        │  │   (Bearer SSO)      │
 │  └───────────────┘  │                     │
 │  ┌───────────────┐  │                     │
 │  │ calendar      │──┼──── HTTP POST ──────┤
@@ -52,8 +52,8 @@ The probation views are **interactive HTML widgets** built with React + Fluent U
                        │                                         │
                        │   ┌──────────────┐    ┌──────────────┐  │
                        │   │  /mcp        │    │ /calendar-mcp│  │
-                       │   │  no auth     │    │  Bearer +    │  │
-                       │   │              │    │  OBO middlew.│  │
+                       │   │  Bearer JWT  │    │  Bearer +    │  │
+                       │   │  validation  │    │  OBO middlew.│  │
                        │   └──────┬───────┘    └──────┬───────┘  │
                        └──────────┼───────────────────┼──────────┘
                                   │                   │
@@ -79,8 +79,10 @@ The probation views are **interactive HTML widgets** built with React + Fluent U
 
 | Endpoint | Auth | Tools | Plugin |
 |---|---|---|---|
-| `/mcp` | none (anonymous) | `show-probation-dashboard`, `show-probationer-detail`, `show-probation-reports` | `probation-plugin.json` |
+| `/mcp` | Bearer (Entra SSO, JWT validated) | `show-probation-dashboard`, `show-probationer-detail`, `show-probation-reports`, `add-probationer`, `update-probationer`, `upsert-objective`, `log-check-in` | `probation-plugin.json` |
 | `/calendar-mcp` | Bearer (Entra SSO → OBO → Graph) | `ListEvents`, `ListCalendarView`, `FindMeetingTimes`, `CreateEvent`, `UpdateEvent`, `DeleteEventById`, `CancelEvent`, `AcceptEvent`, `TentativelyAcceptEvent`, `DeclineEvent`, `WhoAmI` | `calendar-plugin.json` |
+
+Both endpoints share the **same Entra app** (`AAD_APP_CLIENT_ID`) and the same TDP SSO client-ID registration, so a single signed-in identity authorizes both. The `/calendar-mcp` endpoint additionally performs an on-behalf-of (OBO) exchange to call Microsoft Graph.
 
 Both plugins are wired into a single declarative agent (`declarativeAgent.json` → 2 actions) so Copilot can mix tools from both in a single conversation (e.g. "Show me at-risk probationers and book a check-in with each one").
 
@@ -99,7 +101,7 @@ probation-tracker/
 ├── appPackage/
 │   ├── manifest.json            # Teams app manifest
 │   ├── declarativeAgent.json    # Agent definition (references 2 plugins)
-│   ├── probation-plugin.json    # Probation tools (MCP /mcp, no auth)
+│   ├── probation-plugin.json    # Probation tools (MCP /mcp, SSO)
 │   ├── calendar-plugin.json     # Calendar tools (MCP /calendar-mcp, SSO+OBO)
 │   └── instruction.txt          # System prompt for the agent
 ├── env/

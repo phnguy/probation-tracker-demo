@@ -9,8 +9,14 @@
 @localMcp      = http://localhost:3001/mcp
 @tenantId      = 0c2614e6-a76a-433c-80fd-88ac91e67b9d
 
-# App registration (calendar plugin uses SSO via TDP; secret only needed for OBO server-side, not here)
+# App registration (both probation and calendar plugins use SSO via TDP).
 @clientId      = 54881055-411d-41b2-8f25-f1312a1abfe6
+
+# Bearer token for /mcp and /calendar-mcp. Obtain via:
+#   az login --tenant 0c2614e6-a76a-433c-80fd-88ac91e67b9d
+#   az account get-access-token --resource api://auth-82726735-4a55-4f56-a5c5-3f35ade6cb9c --query accessToken -o tsv
+# (Paste the eyJ... value below.)
+@bearer        = REPLACE_WITH_ACCESS_TOKEN
 
 # Common headers (MCP Streamable HTTP)
 @accept        = application/json, text/event-stream
@@ -27,6 +33,7 @@ GET http://localhost:3001/
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0",
@@ -43,6 +50,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 { "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
 
@@ -50,6 +58,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 { "jsonrpc": "2.0", "id": 3, "method": "resources/list" }
 
@@ -57,6 +66,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 4, "method": "tools/call",
@@ -70,6 +80,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 5, "method": "tools/call",
@@ -83,6 +94,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 6, "method": "tools/call",
@@ -93,6 +105,7 @@ Content-Type: application/json
 POST {{localMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 7, "method": "resources/read",
@@ -108,6 +121,7 @@ Content-Type: application/json
 POST {{tunnelMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -122,6 +136,7 @@ Content-Type: application/json
 POST {{tunnelMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 { "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
 
@@ -129,6 +144,7 @@ Content-Type: application/json
 POST {{tunnelMcp}}
 Accept: {{accept}}
 Content-Type: application/json
+Authorization: Bearer {{bearer}}
 
 {
   "jsonrpc": "2.0", "id": 3, "method": "tools/call",

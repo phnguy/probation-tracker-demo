@@ -236,7 +236,8 @@
                 "log-check-in"
             ],
             "auth": {
-                "type": "None"
+                "type": "OAuthPluginVault",
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
             }
         }
     ]

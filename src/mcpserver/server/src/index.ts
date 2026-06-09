@@ -18,14 +18,14 @@ app.get("/", (_req, res) => {
     name: "probation-tracker-mcp",
     status: "ok",
     endpoints: {
-      probation: "/mcp",
+      probation: "/mcp (Bearer auth required)",
       calendar: "/calendar-mcp (Bearer auth required)",
     },
   });
 });
 
-// ── Probation MCP (no auth) ───────────────────────────────────────────────
-app.all("/mcp", async (req, res) => {
+// ── Probation MCP (Bearer auth via Copilot SSO; OBO not needed) ───────────
+app.all("/mcp", authMiddleware, async (req, res) => {
   try {
     const server = createMcpServer();
     const transport = new StreamableHTTPServerTransport({
@@ -58,6 +58,6 @@ app.all("/calendar-mcp", authMiddleware, async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Probation Tracker MCP server running at http://localhost:${PORT}`);
-  console.log(`   Probation MCP : http://localhost:${PORT}/mcp`);
+  console.log(`   Probation MCP : http://localhost:${PORT}/mcp (Bearer token required)`);
   console.log(`   Calendar MCP  : http://localhost:${PORT}/calendar-mcp (Bearer token required)`);
 });
