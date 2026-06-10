@@ -8,6 +8,7 @@
 @tunnelMcp     = https://f0r8gwwh-3001.uks1.devtunnels.ms/mcp
 @localMcp      = http://localhost:3001/mcp
 @tenantId      = 0c2614e6-a76a-433c-80fd-88ac91e67b9d
+@calendarMcp   = https://agent365.svc.cloud.microsoft/agents/tenants/0c2614e6-a76a-433c-80fd-88ac91e67b9d/servers/mcp_CalendarTools
 
 # App registration (both probation and calendar plugins use SSO via TDP).
 @clientId      = 54881055-411d-41b2-8f25-f1312a1abfe6
@@ -16,10 +17,13 @@
 #   az login --tenant 0c2614e6-a76a-433c-80fd-88ac91e67b9d
 #   az account get-access-token --resource api://auth-82726735-4a55-4f56-a5c5-3f35ade6cb9c --query accessToken -o tsv
 # (Paste the eyJ... value below.)
-@bearer        = REPLACE_WITH_ACCESS_TOKEN
+@bearer        = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IndoMDZzRWt6TEhKNXNOTmFVeVJZMl82TzhLMCJ9.eyJhdWQiOiJlYTlmZmMzZS04YTIzLTRhN2QtODM2ZC0yMzRkN2M3NTY1YzEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vMGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkL3YyLjAiLCJpYXQiOjE3ODEwODQzNTMsIm5iZiI6MTc4MTA4NDM1MywiZXhwIjoxNzgxMDg4NzEyLCJhaW8iOiJBWlFBYS84Y0FBQUF5UXM3djU2ODdyNmZIZStLbTJOcnRIbDFNUGtWMmVkWEh6VmlRRW81RUI0cENMYmFpMS92aUJHZmJKUXZCQ1NBNUZ4Qk1sRk1laTBOdEdiMUFRRVErWFpmaDdEQjN5dHNlQTZFU0dHK0o3RFUvdWt3Y0FpajdlVFlZT2J0cFlJT2M0L2sza3pjUnpBTmk2RnNmUG1UUEJhSGZZSHBGSlVFeXRtY1lOcHIzTG9GdCtVR1VNbG9IdWlGdFJWWXc5KzIiLCJhenAiOiI1NDg4MTA1NS00MTFkLTQxYjItOGYyNS1mMTMxMmExYWJmZTYiLCJhenBhY3IiOiIwIiwiaWR0eXAiOiJ1c2VyIiwibmFtZSI6IlBoaS1MYXkgTmd1eWVuIiwib2lkIjoiMTljZTdhM2MtNTMxOS00OWM2LWI2MDktMjMxODM5MTRiNTNlIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGhpLWxheUBUZXN0VGVzdFRPTFRlc3Qub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDMyMDAzOTFGMDU3NDMiLCJyaCI6IjEuQWJjQTVoUW1ER3FuUEVPQV9ZaXNrZVo3blQ3OG4tb2ppbjFLZzIwalRYeDFaY0gzQUJTM0FBLiIsInNjcCI6Ik1jcFNlcnZlcnMuQ2FsZW5kYXIuQWxsIiwic2lkIjoiMDA1YzBhOWEtMjc1My05ZTI3LWE1ZDgtZjg2MzUyNTJkNzViIiwic3ViIjoidzJUV0t2Y2hQWGZvdnh1NWpoNzM2bWRuVDk3Mk5SY0E3clRraXYyWUdZTSIsInRpZCI6IjBjMjYxNGU2LWE3NmEtNDMzYy04MGZkLTg4YWM5MWU2N2I5ZCIsInV0aSI6IlJ2cGtiNUlyMEVPYmJnWkxTbnJYQUEiLCJ2ZXIiOiIyLjAiLCJ4bXNfYWN0X2ZjdCI6IjMgOSIsInhtc19mdGQiOiJsZVZjaXZGeENBRlJ2UHF6R2R6NjU2enUyWTJ5Sk5GVGdQV1h2aXFUMDVJQmRYTnpiM1YwYUMxa2MyMXoiLCJ4bXNfaWRyZWwiOiIzMiAxIiwieG1zX3N1Yl9mY3QiOiIyIDMifQ.kZWirOZ_DTlVxgJhZZkjK0flmaUuXRGqVUoyZvLhByISH3GOkT3taNkzJPqQHcZx-8wxDAlUGGfCntKHRyh7pf8UjhSUU3PdEjZrTS0lk4xMPauFMB_9-B73gH1oS4l0ahh9PWQUtMqHorXdX5O0F4Uz1MkzFxjsmYLp3r8EZeUBNwVLB2CqHp8UyJbCIdU2EXYoJMsCrtLJ98WWF1ZO72-6Lt2jVQFGk25eU48-hqnHc4WP-zuF9xPRiFNyo5S9x2n5Joj_JVFFhO_x1lFWb8B-Jn4KhLf-tAIXZRgOnl9_fxGlk-FtwE2MzuDzl3uN1MahWNkeMSBbC5tV5V0PZA
 
 # Common headers (MCP Streamable HTTP)
 @accept        = application/json, text/event-stream
+@mcpVersion    = 2025-06-18
+# Anchor mailbox = your UPN; many Substrate-fronted services require this.
+@anchorMailbox = phi-lay@TestTestTOLTest.onmicrosoft.com
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SECTION 1 — Local probation MCP server (no auth)
@@ -149,4 +153,202 @@ Authorization: Bearer {{bearer}}
 {
   "jsonrpc": "2.0", "id": 3, "method": "tools/call",
   "params": { "name": "show-probation-dashboard", "arguments": {} }
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 3 — WorkIQ Calendar MCP (agent365)
+# Endpoint: https://agent365.svc.cloud.microsoft/agents/tenants/{tenantId}/servers/mcp_CalendarTools
+# Requires a bearer token scoped to the agent365 / WorkIQ Calendar resource.
+# ═════════════════════════════════════════════════════════════════════════════
+
+# ─── Calendar-specific auth variables ────────────────────────────────────────
+# ─── Calendar-specific auth variables ────────────────────────────────────────
+# ⚠️ The Azure CLI client (04b07795-…) is NOT preauthorized for
+# `McpServers.CalendarTools.All` on the agent365 API (ea9ffc3e-…).
+# Requesting that scope with it returns AADSTS65002.
+#
+# You need a client that IS allowed to ask for the Calendar scope.
+# Pick ONE of the two options below.
+#
+# ─── OPTION A: Register your own app in your tenant ──────────────────────────
+# 1. Entra portal → App registrations → New registration
+#      Name: e.g. "calendar-mcp-rest-client"
+#      Supported account types: Single tenant
+#      Redirect URI: (leave blank — device flow doesn't need one)
+# 2. Authentication → "Allow public client flows" = YES (required for device code).
+# 3. API permissions → Add a permission → APIs my organization uses →
+#      search "ea9ffc3e-8a23-4a7d-836d-234d7c7565c1" (or "agent365") →
+#      Delegated → McpServers.CalendarTools.All → Add → Grant admin consent.
+# 4. Copy the Application (client) ID into @deviceClientId below.
+#
+# ─── OPTION B: Ask the agent365 team to preauthorize Azure CLI ───────────────
+# Have the API owner add 04b07795-8ddb-461a-bbee-02f9e1bf7b46 to the
+# `preAuthorizedApplications` list on the agent365 app for the
+# McpServers.CalendarTools.All scope. Then OPTION A is not needed.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Client id used for device-code login. Replace with your own app reg (OPTION A)
+# or keep 04b07795-... only if OPTION B preauth has been granted.
+@deviceClientId  = 54881055-411d-41b2-8f25-f1312a1abfe6
+
+# agent365 resource app id (audience aud=ea9ffc3e-... in the issued token):
+@agent365AppId   = ea9ffc3e-8a23-4a7d-836d-234d7c7565c1
+
+# Explicit Calendar scope — DISCOVERED via 3.6 (RFC 9728 metadata).
+# The agent365 MCP wants a token whose aud = the full resource URL, not the
+# app id. Use the resource URL + "/.default" as the scope.
+@calendarResource = https://agent365.svc.cloud.microsoft/agents/tenants/{{tenantId}}/servers/mcp_CalendarTools
+@calendarScope    = {{calendarResource}}/.default offline_access openid profile
+# Fallbacks (only if AAD returns invalid_scope):
+#   {{agent365AppId}}/McpServers.Calendar.All offline_access
+#   {{agent365AppId}}/.default
+
+# Paste the access_token from step 3.0b below into this variable.
+# ⚠️ CONFIRMED WORKING with a token whose `scp` is `McpServers.Calendar.All`
+#    and `aud` is `ea9ffc3e-8a23-4a7d-836d-234d7c7565c1`. If you get 401,
+#    99% of the time it's one of these:
+#      - You forgot to replace the placeholder below (still says REPLACE_...)
+#      - You pasted with a trailing newline or accidental space
+#      - You included the literal word "Bearer " before the token
+#    Paste ONLY the raw `eyJ...` value on a single line, no quotes.
+@calendarBearer  = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IndoMDZzRWt6TEhKNXNOTmFVeVJZMl82TzhLMCJ9.eyJhdWQiOiJlYTlmZmMzZS04YTIzLTRhN2QtODM2ZC0yMzRkN2M3NTY1YzEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vMGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkL3YyLjAiLCJpYXQiOjE3ODEwOTM1NTksIm5iZiI6MTc4MTA5MzU1OSwiZXhwIjoxNzgxMDk5MTkyLCJhaW8iOiJBWlFBYS84Y0FBQUF3cnV6R0cvNjkzdWlnWFBtNVpacFpjUWdMNm8vdTNBNXpCdzdYbXkwMVpGUmxRR0Fob1VySkRiWHlHREp0TjJNZFFuUlowRUMxTE8wZzNDaTJLM1AyUTJzUGhQbjJRcEdpT1ZJNWhmOVlCdHhKbzlMc3lmS1NFU2UxZTBwNXR0R0tsZVpvRFphUHV1OWlFODJGTUhxSWVhSEJybWloTVVkRnBIVTB3YkJIek9QQmVudkVjeEtveXBmTVQ0R3JXaTAiLCJhenAiOiI1NDg4MTA1NS00MTFkLTQxYjItOGYyNS1mMTMxMmExYWJmZTYiLCJhenBhY3IiOiIwIiwiaWR0eXAiOiJ1c2VyIiwibmFtZSI6IlBoaS1MYXkgTmd1eWVuIiwib2lkIjoiMTljZTdhM2MtNTMxOS00OWM2LWI2MDktMjMxODM5MTRiNTNlIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGhpLWxheUBUZXN0VGVzdFRPTFRlc3Qub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDMyMDAzOTFGMDU3NDMiLCJyaCI6IjEuQWJjQTVoUW1ER3FuUEVPQV9ZaXNrZVo3blQ3OG4tb2ppbjFLZzIwalRYeDFaY0gzQUJTM0FBLiIsInNjcCI6Ik1jcFNlcnZlcnMuQ2FsZW5kYXIuQWxsIiwic2lkIjoiMDA1YzBhOWEtMjc1My05ZTI3LWE1ZDgtZjg2MzUyNTJkNzViIiwic3ViIjoidzJUV0t2Y2hQWGZvdnh1NWpoNzM2bWRuVDk3Mk5SY0E3clRraXYyWUdZTSIsInRpZCI6IjBjMjYxNGU2LWE3NmEtNDMzYy04MGZkLTg4YWM5MWU2N2I5ZCIsInV0aSI6IkZwZkllMUJoVFVHWkpzRnRUY0NOQUEiLCJ2ZXIiOiIyLjAiLCJ4bXNfYWN0X2ZjdCI6IjMgOSIsInhtc19mdGQiOiIxbW5nQzl5bjRnbE0tdnEtdGFocVZvc3NqbGtEV2lReDFLczNMMmc1c3NRQmRYTmxZWE4wTFdSemJYTSIsInhtc19pZHJlbCI6IjE4IDEiLCJ4bXNfc3ViX2ZjdCI6IjggMyJ9.FcE5_ovvTL9ExjDMugBmAAn70sP1dqLWfrF6EFggqHg-trJD3vagsaAHmOKUg_qeuXARutMm2QGnvSMw9UNxdTTZP6Urc7SC2RV-T7VeBXQs-P9gCb1Bplm9UnVGSi98Bl7PkYrIA4T5VAoG0VF-lxlSyPyI3LHYi9nkdygbU1erSzGEDLvhHdw81QuiduilYylllpb0XwuqzVveLbZBMuEAI1G82FWA7Xn9WzRMZPUOnmNIV3aIIm64taZ2E2vualGPdUWow6KmAQTqMyJYvk_XTmP4PrKnws8enjyj6EifFvt7rUM3R4_rzGcZLeOfog0nrBFQTS9oVfeF6BUwQA
+
+### 3.0a Start device-code flow
+# Run this, then open the returned `verification_uri` in a browser and enter
+# the `user_code`. **You must consent to the Calendar scope on that page.**
+# Copy `device_code` is auto-wired into step 3.0b via response variable.
+# @name calDeviceCode
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/devicecode
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{deviceClientId}}&scope={{calendarScope}}
+
+### 3.0b Poll for the token (run AFTER completing the browser step in 3.0a)
+# Auto-uses device_code from 3.0a. After this returns 200, copy `access_token`
+# into @calendarBearer above.
+# @name calToken
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id={{deviceClientId}}&device_code={{calDeviceCode.response.body.device_code}}
+
+# Alternative (PowerShell one-liner using Azure CLI):
+#   az login --tenant 0c2614e6-a76a-433c-80fd-88ac91e67b9d --use-device-code
+#   az account get-access-token --resource ea9ffc3e-8a23-4a7d-836d-234d7c7565c1 --query accessToken -o tsv
+# (Note: `az account get-access-token` always requests `.default`, so it will
+#  only work if McpServers.CalendarTools.All is already admin-consented for
+#  the Azure CLI client. If not, use the device-code flow above which lets
+#  you consent interactively.)
+
+### 3.0c Decode current @calendarBearer (sanity check audience + scopes)
+# Paste the token at jwt.ms or run locally:
+#   PowerShell:  $t = "<token>"; $p = $t.Split('.')[1].PadRight(($t.Split('.')[1].Length + 3) -band -bnot 3, '='); [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p.Replace('-','+').Replace('_','/')))
+# Confirm: aud == ea9ffc3e-8a23-4a7d-836d-234d7c7565c1 AND scp contains a Calendar entry.
+
+### 3.1 initialize (REQUIRED first call per MCP spec)
+# @name calInit
+POST {{calendarMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{calendarBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 3.2 tools/list
+POST {{calendarMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{calendarBearer}}
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 3.3 resources/list
+POST {{calendarMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{calendarBearer}}
+
+{ "jsonrpc": "2.0", "id": 3, "method": "resources/list" }
+
+### 3.4 prompts/list
+POST {{calendarMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{calendarBearer}}
+
+{ "jsonrpc": "2.0", "id": 4, "method": "prompts/list" }
+
+### 3.5 401 diagnostic — read the WWW-Authenticate header
+# Use this if 3.1 returns 401. Check the response's headers tab for
+# `WWW-Authenticate: Bearer error="invalid_token", error_description="..."`
+# which states the EXACT reason (bad audience, missing scope, expired, etc.).
+OPTIONS {{calendarMcp}}
+Authorization: Bearer {{calendarBearer}}
+
+### 3.6 Discover protected-resource metadata (RFC 9728)
+# The 401 response pointed here. This document tells you the canonical
+# `resource` (= required aud), `scopes_supported`, and `authorization_servers`.
+# After running this, update @calendarScope to match `scopes_supported[0]`
+# (e.g. "<resource>/McpServers.CalendarTools.All") and re-run 3.0a → 3.0b.
+# @name calResourceMeta
+GET https://agent365.svc.cloud.microsoft/.well-known/oauth-protected-resource/agents/tenants/{{tenantId}}/servers/mcp_CalendarTools
+Accept: application/json
+
+### 3.7 Discover the authorization server's OIDC config
+# Use the first entry from `authorization_servers` in 3.6's response.
+# Example: https://login.microsoftonline.com/{{tenantId}}/v2.0
+GET https://login.microsoftonline.com/{{tenantId}}/v2.0/.well-known/openid-configuration
+Accept: application/json
+
+### 3.8 tools/call → CreateEvent (book a meeting with myself)
+# Schema confirmed from tools/list. Notes:
+#  - `timeZone` uses Windows TZ ids (e.g. "Romance Standard Time" = Paris,
+#    "Pacific Standard Time", "UTC"). NOT IANA ids like "Europe/Paris".
+#  - `attendeeEmails` is a flat string[] (UPNs or SMTP addresses).
+#  - `isOnlineMeeting` defaults to true → server auto-adds a Teams link.
+#  - Edit startDateTime / endDateTime to a future time before sending.
+POST {{calendarMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{calendarBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "CreateEvent",
+    "arguments": {
+      "subject": "Focus time (self-booked)",
+      "attendeeEmails": ["{{anchorMailbox}}"],
+      "startDateTime": "2026-06-11T10:00:00",
+      "endDateTime":   "2026-06-11T10:30:00",
+      "timeZone": "Romance Standard Time",
+      "bodyContent": "Self-booked via MCP rest-client test.",
+      "bodyContentType": "Text",
+      "isOnlineMeeting": true,
+      "onlineMeetingProvider": "teamsForBusiness",
+      "showAs": "busy",
+      "importance": "normal"
+    }
+  }
 }

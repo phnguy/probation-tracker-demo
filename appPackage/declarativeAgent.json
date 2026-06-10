@@ -44,7 +44,7 @@
         },
         {
             "id": "calendar",
-            "file": "calendar-plugin.json"
+            "file": "calendarMCP-plugin.json"
         }
     ]
 }

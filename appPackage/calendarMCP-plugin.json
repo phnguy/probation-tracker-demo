@@ -1,0 +1,104 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "WorkIQ Calendar (agent365)",
+    "description_for_human": "Read and manage the signed-in user's Outlook calendar via the Microsoft-hosted WorkIQ Calendar MCP server on agent365 (no local relay required).",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "workiqCalendar",
+    "functions": [
+        {
+            "name": "ListEvents",
+            "description": "Retrieve a list of events for the signed-in user with start/end datetimes, title, attendee emails. Returns only the master event for recurring meetings."
+        },
+        {
+            "name": "ListCalendarView",
+            "description": "Retrieve calendar events in a window with recurring meetings expanded into individual instances. Prefer over ListEvents for day/week views."
+        },
+        {
+            "name": "CreateEvent",
+            "description": "Create a new calendar event. Accepts attendee names or emails (names are resolved). Default duration 30 min. All events automatically get a Teams meeting link unless isAllDay=true."
+        },
+        {
+            "name": "UpdateEvent",
+            "description": "Update an existing calendar event by ID (subject, time, attendees, body, etc.)."
+        },
+        {
+            "name": "DeleteEventById",
+            "description": "Delete a calendar event by its ID without notifying attendees."
+        },
+        {
+            "name": "CancelEvent",
+            "description": "Cancel a calendar event as the organizer and notify all attendees."
+        },
+        {
+            "name": "FindMeetingTimes",
+            "description": "Suggest available meeting times for the signed-in user and a list of attendees based on free/busy availability."
+        },
+        {
+            "name": "AcceptEvent",
+            "description": "Accept a calendar event invitation. Optionally include a comment and choose whether to send a response."
+        },
+        {
+            "name": "TentativelyAcceptEvent",
+            "description": "Tentatively accept a calendar event invitation."
+        },
+        {
+            "name": "DeclineEvent",
+            "description": "Decline a calendar event invitation."
+        },
+        {
+            "name": "ForwardEvent",
+            "description": "Forward a calendar event invitation to additional recipients."
+        },
+        {
+            "name": "GetRooms",
+            "description": "List bookable meeting rooms available to the signed-in user."
+        },
+        {
+            "name": "GetUserDateAndTimeZoneSettings",
+            "description": "Return the signed-in user's mailbox date format and time zone (Windows TZ id)."
+        },
+        {
+            "name": "GetOnlineMeetingAiInsights",
+            "description": "Get AI-generated insights (action items, summary) for an online meeting."
+        },
+        {
+            "name": "GetOnlineMeetingAttendanceReports",
+            "description": "Retrieve attendance reports for a past Teams online meeting."
+        },
+        {
+            "name": "GetOnlineMeetingTranscripts",
+            "description": "Retrieve transcripts for a past Teams online meeting."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://agent365.svc.cloud.microsoft/agents/tenants/${{TEAMS_APP_TENANT_ID}}/servers/mcp_CalendarTools"
+            },
+            "run_for_functions": [
+                "ListEvents",
+                "ListCalendarView",
+                "CreateEvent",
+                "UpdateEvent",
+                "DeleteEventById",
+                "CancelEvent",
+                "FindMeetingTimes",
+                "AcceptEvent",
+                "TentativelyAcceptEvent",
+                "DeclineEvent",
+                "ForwardEvent",
+                "GetRooms",
+                "GetUserDateAndTimeZoneSettings",
+                "GetOnlineMeetingAiInsights",
+                "GetOnlineMeetingAttendanceReports",
+                "GetOnlineMeetingTranscripts"
+            ],
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyNjNzJhYTZkNS1hNTNhLTQwYzMtOWEwMy05MzU4ZDYwNzU3MDY="
+            }
+        }
+    ]
+}
