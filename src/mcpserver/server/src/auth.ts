@@ -43,6 +43,10 @@ function getMsal(): ConfidentialClientApplication {
 }
 
 async function getGraphToken(scopes: string[]): Promise<string> {
+  return getOboToken(scopes);
+}
+
+export async function getOboToken(scopes: string[]): Promise<string> {
   const { userAssertion } = getAuthContext();
   const result = await getMsal().acquireTokenOnBehalfOf({
     oboAssertion: userAssertion,

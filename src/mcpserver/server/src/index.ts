@@ -5,6 +5,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createMcpServer } from "./mcp-server.js";
 import { createCalendarMcpServer } from "./calendar-mcp-server.js";
 import { authMiddleware } from "./auth.js";
+import { workiqCalendarProxy } from "./workiq-calendar-proxy.js";
 
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
 
@@ -20,6 +21,7 @@ app.get("/", (_req, res) => {
     endpoints: {
       probation: "/mcp (Bearer auth required)",
       calendar: "/calendar-mcp (Bearer auth required)",
+      workiqCalendar: "/workiq-calendar-mcp (Bearer auth required, OBO to agent365)",
     },
   });
 });
@@ -56,8 +58,12 @@ app.all("/calendar-mcp", authMiddleware, async (req, res) => {
   }
 });
 
+// ── WorkIQ Calendar MCP (Bearer auth via Copilot SSO + OBO to agent365) ───
+app.all("/workiq-calendar-mcp", authMiddleware, workiqCalendarProxy);
+
 app.listen(PORT, () => {
   console.log(`🚀 Probation Tracker MCP server running at http://localhost:${PORT}`);
-  console.log(`   Probation MCP : http://localhost:${PORT}/mcp (Bearer token required)`);
-  console.log(`   Calendar MCP  : http://localhost:${PORT}/calendar-mcp (Bearer token required)`);
+  console.log(`   Probation MCP        : http://localhost:${PORT}/mcp (Bearer token required)`);
+  console.log(`   Calendar MCP (Graph) : http://localhost:${PORT}/calendar-mcp (Bearer token required)`);
+  console.log(`   WorkIQ Calendar MCP  : http://localhost:${PORT}/workiq-calendar-mcp (Bearer + OBO to agent365)`);
 });

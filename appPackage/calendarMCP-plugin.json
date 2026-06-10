@@ -1,8 +1,8 @@
 {
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
     "schema_version": "v2.4",
-    "name_for_human": "WorkIQ Calendar (agent365)",
-    "description_for_human": "Read and manage the signed-in user's Outlook calendar via the Microsoft-hosted WorkIQ Calendar MCP server on agent365 (no local relay required).",
+    "name_for_human": "WorkIQ Calendar (via my MCP, OBO)",
+    "description_for_human": "Read and manage the signed-in user's Outlook calendar through the WorkIQ Calendar MCP (agent365), proxied by the Probation Tracker MCP server using On-Behalf-Of.",
     "contact_email": "publisher-email@example.com",
     "namespace": "workiqCalendar",
     "functions": [
@@ -75,7 +75,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://agent365.svc.cloud.microsoft/agents/tenants/${{TEAMS_APP_TENANT_ID}}/servers/mcp_CalendarTools"
+                "url": "${{MCP_SERVER_URL}}/workiq-calendar-mcp"
             },
             "run_for_functions": [
                 "ListEvents",
@@ -97,7 +97,7 @@
             ],
             "auth": {
                 "type": "OAuthPluginVault",
-                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyNjNzJhYTZkNS1hNTNhLTQwYzMtOWEwMy05MzU4ZDYwNzU3MDY="
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
             }
         }
     ]
