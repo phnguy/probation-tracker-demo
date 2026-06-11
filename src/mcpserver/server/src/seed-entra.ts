@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { ConfidentialClientApplication } from "@azure/msal-node";
-import { ensureTables, probationersTable } from "./db.js";
+import { ensureTables, probationersTable, objectivesTable, checkInsTable } from "./db.js";
 
 const TENANT = process.env.TEAMS_APP_TENANT_ID ?? process.env.AAD_APP_TENANT_ID ?? "";
 const CLIENT_ID = process.env.AAD_APP_CLIENT_ID ?? "";
@@ -59,8 +59,7 @@ function isoDateOnly(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function buildProbationer(user: GraphUser, index: number) {
-  const start = new Date();
+function buildProbationer(user: GraphUser, index: number) {  const start = new Date();
   start.setDate(start.getDate() - (index * 5)); // stagger start dates a bit
   const end = new Date(start);
   end.setMonth(end.getMonth() + 6);
@@ -82,6 +81,80 @@ function buildProbationer(user: GraphUser, index: number) {
   };
 }
 
+type Probationer = ReturnType<typeof buildProbationer>;
+
+const OBJECTIVE_TEMPLATES = [
+  { objective: "Complete onboarding curriculum", description: "Finish required onboarding modules and pass the role-specific assessment.", offsetDays: 30, status: "Completed", progress: 100 },
+  { objective: "Ship first owned deliverable", description: "Own and deliver a first measurable piece of work end-to-end with peer review.", offsetDays: 90, status: "In Progress", progress: 60 },
+  { objective: "Present to stakeholders", description: "Demo completed work and impact to the wider team and stakeholders.", offsetDays: 150, status: "Not Started", progress: 10 },
+];
+
+async function seedObjectivesFor(p: Probationer) {
+  const startMs = Date.parse(p.startDate);
+  for (let j = 0; j < OBJECTIVE_TEMPLATES.length; j++) {
+    const t = OBJECTIVE_TEMPLATES[j];
+    const id = `${p.id}-OBJ${String(j + 1).padStart(2, "0")}`;
+    const targetDate = isoDateOnly(new Date(startMs + t.offsetDays * 86400000));
+    const entity = {
+      partitionKey: p.id,
+      rowKey: id,
+      id,
+      probationerId: p.id,
+      objective: t.objective,
+      description: t.description,
+      targetDate,
+      status: t.status,
+      progress: t.progress,
+    };
+    try {
+      await objectivesTable.upsertEntity(entity, "Replace");
+      console.log(`     • objective ${id}: ${t.objective}`);
+    } catch (err) {
+      console.error(`     ❌ objective ${id} failed:`, (err as Error).message);
+    }
+  }
+}
+
+const RATINGS = ["Strong", "Meets Expectations", "Strong", "Meets Expectations", "", ""];
+const NOTES_BY_MONTH = [
+  "Onboarded smoothly; settling into the team and tooling.",
+  "Building confidence on day-to-day responsibilities.",
+  "Delivering scoped work independently; quality on track.",
+  "Stepping up on ownership and cross-team collaboration.",
+  "Pre-final review — prep deliverables for end of probation.",
+  "Final probation decision review.",
+];
+
+async function seedCheckInsFor(p: Probationer) {
+  const startMs = Date.parse(p.startDate);
+  const todayMs = Date.now();
+  for (let m = 1; m <= 6; m++) {
+    const scheduledMs = startMs + m * 30 * 86400000;
+    const past = scheduledMs < todayMs;
+    const id = `${p.id}-CHK${String(m).padStart(2, "0")}`;
+    const scheduledDate = isoDateOnly(new Date(scheduledMs));
+    const entity = {
+      partitionKey: p.id,
+      rowKey: id,
+      id,
+      probationerId: p.id,
+      checkInName: `Month ${m} Check-In`,
+      checkInNumber: m,
+      scheduledDate,
+      completedDate: past ? scheduledDate : "",
+      status: past ? "Completed" : "Scheduled",
+      overallRating: past ? RATINGS[m - 1] : "",
+      notes: NOTES_BY_MONTH[m - 1],
+    };
+    try {
+      await checkInsTable.upsertEntity(entity, "Replace");
+      console.log(`     • check-in ${id}: month ${m} (${entity.status})`);
+    } catch (err) {
+      console.error(`     ❌ check-in ${id} failed:`, (err as Error).message);
+    }
+  }
+}
+
 async function main() {
   console.log(`🌱 Seeding ${COUNT} probationers from Entra (tenant ${TENANT})…`);
   await ensureTables();
@@ -100,6 +173,8 @@ async function main() {
     } catch (err) {
       console.error(`  ❌ ${entity.id} failed:`, (err as Error).message);
     }
+    await seedObjectivesFor(entity);
+    await seedCheckInsFor(entity);
   }
   console.log("\n✅ Done.");
 }
