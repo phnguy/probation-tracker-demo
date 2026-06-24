@@ -25,6 +25,10 @@
             "text": "Schedule a 30-minute check-in with Sarah Martinez next Tuesday at 2pm"
         },
         {
+            "title": "Generate check-in questions",
+            "text": "Give me the probation check-in questions for Sarah Martinez based on the template in SharePoint"
+        },
+        {
             "title": "Who is my probationer?",
             "text": "Tell me about Sarah Martinez — her role, manager and recent work"
         }
@@ -35,6 +39,14 @@
         },
         {
             "name": "Email"
+        },
+        {
+            "name": "OneDriveAndSharePoint",
+            "items_by_url": [
+                {
+                    "url": "https://testtesttoltest.sharepoint.com/Probation%20Documents/"
+                }
+            ]
         }
     ],
     "actions": [
@@ -45,6 +57,10 @@
         {
             "id": "calendar",
             "file": "calendarMCP-plugin.json"
+        },
+        {
+            "id": "word",
+            "file": "wordMCP-plugin.json"
         }
     ]
 }

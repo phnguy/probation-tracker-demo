@@ -1,0 +1,44 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "WorkIQ Word (via my MCP, OBO)",
+    "description_for_human": "Create and edit Microsoft Word documents in the signed-in user's OneDrive / SharePoint through the WorkIQ Word MCP (agent365), proxied by the Probation Tracker MCP server using On-Behalf-Of.",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "workiqWord",
+    "functions": [
+        {
+            "name": "CreateDocument",
+            "description": "Create a new Word document in the root of the signed-in user's OneDrive. Provide a fileName (may be empty for auto-generated Document_yyyyMMdd_HHmms.docx) and contentInHtml (HTML or plain text body). Optional shareWith email address shares the doc with that person. Returns the created DriveItem JSON from Microsoft Graph (driveId, documentId, webUrl)."
+        },
+        {
+            "name": "GetDocumentContent",
+            "description": "Fetch the contents of a Word (DOCX) document from OneDrive or SharePoint given its sharing URL. Returns a JSON payload with filename, size, driveId, documentId, plain text content, and all comments in the document. Input must be the SharePoint or OneDrive sharing link."
+        },
+        {
+            "name": "AddComment",
+            "description": "Add a new comment to a Word document. Requires driveId, documentId, and the comment text."
+        },
+        {
+            "name": "ReplyToComment",
+            "description": "Reply to an existing comment in a Word document. Requires commentId, driveId, documentId, and the reply text."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "${{MCP_SERVER_URL}}/workiq-word-mcp"
+            },
+            "run_for_functions": [
+                "CreateDocument",
+                "GetDocumentContent",
+                "AddComment",
+                "ReplyToComment"
+            ],
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "MGMyNjE0ZTYtYTc2YS00MzNjLTgwZmQtODhhYzkxZTY3YjlkIyM4MjcyNjczNS00YTU1LTRmNTYtYTVjNS0zZjM1YWRlNmNiOWM="
+            }
+        }
+    ]
+}

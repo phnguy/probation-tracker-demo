@@ -6,9 +6,12 @@
 # Variables
 # ─────────────────────────────────────────────────────────────────────────────
 @tunnelMcp     = https://f0r8gwwh-3001.uks1.devtunnels.ms/mcp
+@tunnelWordMcp = https://f0r8gwwh-3001.uks1.devtunnels.ms/workiq-word-mcp
 @localMcp      = http://localhost:3001/mcp
+@localWordMcp  = http://localhost:3001/workiq-word-mcp
 @tenantId      = 0c2614e6-a76a-433c-80fd-88ac91e67b9d
 @calendarMcp   = https://agent365.svc.cloud.microsoft/agents/tenants/0c2614e6-a76a-433c-80fd-88ac91e67b9d/servers/mcp_CalendarTools
+@wordMcp       = https://agent365.svc.cloud.microsoft/agents/tenants/0c2614e6-a76a-433c-80fd-88ac91e67b9d/servers/mcp_WordServer
 
 # App registration (both probation and calendar plugins use SSO via TDP).
 @clientId      = 54881055-411d-41b2-8f25-f1312a1abfe6
@@ -352,3 +355,285 @@ Authorization: Bearer {{calendarBearer}}
     }
   }
 }
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 4 — WorkIQ Word MCP (agent365)
+# Endpoint: https://agent365.svc.cloud.microsoft/agents/tenants/{tenantId}/servers/mcp_WordServer
+# Requires a bearer token whose `aud` = agent365 app id (ea9ffc3e-…) and whose
+# `scp` includes the Word scope (e.g. `McpServers.Word.All`).
+# Tools (preview, may change): CreateDocument, GetDocumentContent,
+#                              AddComment, ReplyToComment
+# ═════════════════════════════════════════════════════════════════════════════
+
+# ─── Word-specific auth variables ────────────────────────────────────────────
+# Same shape as Section 3 (Calendar). The middle-tier client must be
+# pre-authorized (or admin-consented) for `McpServers.Word.All` on the
+# agent365 API (ea9ffc3e-…). If you get AADSTS65001 / invalid_scope, repeat
+# the OPTION A registration steps from Section 3 but pick `McpServers.Word.All`
+# instead of `McpServers.CalendarTools.All`.
+
+# Resource URL — discovered via 4.6 (RFC 9728 metadata):
+@wordResource = https://agent365.svc.cloud.microsoft/agents/tenants/{{tenantId}}/servers/mcp_WordServer
+@wordScope    = {{wordResource}}/.default offline_access openid profile
+# Fallbacks (only if AAD returns invalid_scope):
+#   {{agent365AppId}}/McpServers.Word.All offline_access
+#   {{agent365AppId}}/.default
+
+# Paste the access_token from step 4.0b below into this variable.
+# Required: aud = ea9ffc3e-…, scp contains a Word scope (McpServers.Word.All).
+@wordBearer  = PASTE_WORD_ACCESS_TOKEN_HERE
+
+### 4.0a Start device-code flow for Word scope
+# After running, open the returned `verification_uri` and enter `user_code`,
+# **consent to the Word scope** on that page.
+# @name wordDeviceCode
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/devicecode
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{deviceClientId}}&scope={{wordScope}}
+
+### 4.0b Poll for the Word access token (run AFTER 4.0a is complete)
+# Auto-uses device_code from 4.0a. Copy `access_token` into @wordBearer above.
+# @name wordToken
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id={{deviceClientId}}&device_code={{wordDeviceCode.response.body.device_code}}
+
+### 4.0c Decode current @wordBearer (sanity check audience + scopes)
+# Confirm aud = ea9ffc3e-8a23-4a7d-836d-234d7c7565c1 AND scp contains a Word entry.
+# PowerShell one-liner:
+#   $t = "<token>"; $p = $t.Split('.')[1].PadRight(($t.Split('.')[1].Length + 3) -band -bnot 3, '='); [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p.Replace('-','+').Replace('_','/')))
+
+### 4.1 initialize (REQUIRED first call per MCP spec)
+# @name wordInit
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 4.2 tools/list
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 4.3 resources/list
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{ "jsonrpc": "2.0", "id": 3, "method": "resources/list" }
+
+### 4.4 prompts/list
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{ "jsonrpc": "2.0", "id": 4, "method": "prompts/list" }
+
+### 4.5 401 diagnostic — read the WWW-Authenticate header
+# Use this if 4.1 returns 401. Check the response headers for
+# `WWW-Authenticate: Bearer error="invalid_token", error_description="..."`
+# which states the EXACT reason (bad audience, missing scope, expired, etc.).
+OPTIONS {{wordMcp}}
+Authorization: Bearer {{wordBearer}}
+
+### 4.6 Discover protected-resource metadata (RFC 9728)
+# Tells you the canonical `resource` (= required aud), `scopes_supported`,
+# and `authorization_servers`. Update @wordScope to match `scopes_supported[0]`
+# (e.g. "<resource>/McpServers.Word.All") and re-run 4.0a → 4.0b.
+# @name wordResourceMeta
+GET https://agent365.svc.cloud.microsoft/.well-known/oauth-protected-resource/agents/tenants/{{tenantId}}/servers/mcp_WordServer
+Accept: application/json
+
+### 4.7 tools/call → CreateDocument
+# Creates a Word doc in the root of the signed-in user's OneDrive.
+# Notes:
+#  - `fileName` is REQUIRED but may be empty → server auto-names it Document_yyyyMMdd_HHmms.docx
+#  - `contentInHtml` accepts simple HTML or plain text for the body. All tags / URLs must be valid.
+#  - `shareWith` (optional) shares the doc with that email address. Omit if unknown — never fabricate.
+#  - The response is the Microsoft Graph DriveItem JSON — capture `driveId`,
+#    `id` (= documentId) and `webUrl` from it for later AddComment / ReplyToComment calls.
+# @name wordCreateDocument
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "CreateDocument",
+    "arguments": {
+      "fileName": "Probation review — Sarah Martinez (MCP rest-client test).docx",
+      "contentInHtml": "<h1>Probation Review — Sarah Martinez</h1><p><strong>Period:</strong> Months 1–3</p><h2>Objectives</h2><ul><li>Ramp up on the codebase</li><li>Ship first feature end-to-end</li></ul><h2>Manager feedback</h2><p>Generated via MCP rest-client test.</p>"
+    }
+  }
+}
+
+### 4.8 tools/call → GetDocumentContent
+# Reads a Word document by its SharePoint / OneDrive **sharing URL** (not the
+# Graph driveItem URL). Returns filename, size, driveId, documentId, plain-text
+# content, and all comments. Replace the `url` below with a real sharing link
+# (e.g. the `webUrl` returned by 4.7, or a "Copy link" share from OneDrive).
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "GetDocumentContent",
+    "arguments": {
+      "url": "https://testtesttoltest-my.sharepoint.com/:w:/r/personal/phi-lay_TestTestTOLTest_onmicrosoft_com/Documents/Probation%20review%20%E2%80%94%20Sarah%20Martinez%20%28MCP%20rest-client%20test%29.docx?d=wREPLACE&csf=1&web=1"
+    }
+  }
+}
+
+### 4.9 tools/call → AddComment
+# Adds a new comment on a Word document. Replace `driveId` and `documentId`
+# with the values returned by 4.7 / 4.8 (they are opaque — copy as-is).
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "AddComment",
+    "arguments": {
+      "driveId": "REPLACE_WITH_DRIVE_ID",
+      "documentId": "REPLACE_WITH_DOCUMENT_ID",
+      "newComment": "Please tighten the objectives section before the 3-month review."
+    }
+  }
+}
+
+### 4.10 tools/call → ReplyToComment
+# Replies to an existing comment. `commentId` comes from the comments[] array
+# in the 4.8 response.
+POST {{wordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+x-anchor-mailbox: {{anchorMailbox}}
+Authorization: Bearer {{wordBearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "ReplyToComment",
+    "arguments": {
+      "commentId": "REPLACE_WITH_COMMENT_ID",
+      "driveId": "REPLACE_WITH_DRIVE_ID",
+      "documentId": "REPLACE_WITH_DOCUMENT_ID",
+      "newComment": "Thanks — will revise and re-share."
+    }
+  }
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTION 5 — Local /workiq-word-mcp proxy (probation-tracker MCP server)
+# Hits the Express proxy, which validates the Bearer (access_as_user), runs
+# the OBO swap to mcp_WordServer, and transparently forwards JSON-RPC / SSE.
+# Use the SAME @bearer as Section 1 (access_as_user token), NOT @wordBearer.
+# ═════════════════════════════════════════════════════════════════════════════
+
+### 5.1 Health probe (lists the four endpoints including workiq-word-mcp)
+GET http://localhost:3001/
+
+### 5.2 initialize through the local proxy
+POST {{localWordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+Authorization: Bearer {{bearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": { "name": "rest-client", "version": "0.0.1" }
+  }
+}
+
+### 5.3 tools/list through the local proxy
+POST {{localWordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+Authorization: Bearer {{bearer}}
+
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+### 5.4 tools/call → CreateDocument through the local proxy
+POST {{localWordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+Authorization: Bearer {{bearer}}
+
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "CreateDocument",
+    "arguments": {
+      "fileName": "",
+      "contentInHtml": "<h1>Hello from /workiq-word-mcp</h1><p>Created via the local proxy.</p>"
+    }
+  }
+}
+
+### 5.5 Same flow but through the dev tunnel (what M365 Copilot hits)
+POST {{tunnelWordMcp}}
+Accept: {{accept}}
+Content-Type: application/json
+MCP-Protocol-Version: {{mcpVersion}}
+Authorization: Bearer {{bearer}}
+
+{ "jsonrpc": "2.0", "id": 1, "method": "tools/list" }
