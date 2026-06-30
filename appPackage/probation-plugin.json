@@ -20,7 +20,7 @@
         },
         {
             "name": "add-probationer",
-            "description": "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate, endDate, status, notes. Returns the updated dashboard with the new probationer included."
+            "description": "Create a new probationer record. Required: fullName, email. Optional: managerEmail, jobTitle, department, startDate, endDate, status, notes. Returns the updated dashboard with the new probationer included."
         },
         {
             "name": "update-probationer",
@@ -117,12 +117,13 @@
                         {
                             "name": "add-probationer",
                             "title": "Add Probationer",
-                            "description": "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
+                            "description": "Create a new probationer record. Required: fullName, email. Optional: managerEmail, jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
                                     "fullName": { "type": "string", "description": "Full name of the probationer (required)." },
                                     "email": { "type": "string", "description": "Work email of the probationer (required)." },
+                                    "managerEmail": { "type": "string", "description": "Line manager's UPN / email. Used later to filter 'my probationers'." },
                                     "jobTitle": { "type": "string", "description": "Job title, e.g. 'Software Engineer'." },
                                     "department": { "type": "string", "description": "Department, e.g. 'Engineering', 'Sales', 'Marketing'." },
                                     "startDate": { "type": "string", "description": "Probation start date as YYYY-MM-DD. Defaults to today." },
@@ -152,6 +153,7 @@
                                     "name": { "type": "string", "description": "Full or partial name (case-insensitive) if probationer_id is not provided." },
                                     "fullName": { "type": "string" },
                                     "email": { "type": "string" },
+                                    "managerEmail": { "type": "string", "description": "Line manager's UPN / email." },
                                     "jobTitle": { "type": "string" },
                                     "department": { "type": "string" },
                                     "startDate": { "type": "string", "description": "YYYY-MM-DD." },

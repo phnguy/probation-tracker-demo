@@ -292,10 +292,11 @@ export function createMcpServer(): McpServer {
 
   registerAppTool(server, "add-probationer", {
     title: "Add Probationer",
-    description: "Create a new probationer record. Required: fullName, email. Optional: jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
+    description: "Create a new probationer record. Required: fullName, email. Optional: managerEmail, jobTitle, department, startDate (YYYY-MM-DD, defaults to today), endDate (YYYY-MM-DD, defaults to 6 months after startDate), status, notes. The new probationer appears in the dashboard returned by this tool.",
     inputSchema: {
       fullName: z.string().describe("Full name of the probationer (required)."),
       email: z.string().describe("Work email of the probationer (required)."),
+      managerEmail: z.string().optional().describe("Line manager's UPN / email. Used later to filter 'my probationers'."),
       jobTitle: z.string().optional().describe("Job title, e.g. 'Software Engineer'."),
       department: z.string().optional().describe("Department, e.g. 'Engineering', 'Sales', 'Marketing'."),
       startDate: z.string().optional().describe("Probation start date as YYYY-MM-DD. Defaults to today."),
@@ -305,8 +306,8 @@ export function createMcpServer(): McpServer {
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     _meta: { ui: { resourceUri: DASHBOARD_URI } },
-  }, async ({ fullName, email, jobTitle, department, startDate, endDate, status, notes }): Promise<CallToolResult> => {
-    const created = await db.createProbationer({ fullName, email, jobTitle, department, startDate, endDate, status, notes });
+  }, async ({ fullName, email, managerEmail, jobTitle, department, startDate, endDate, status, notes }): Promise<CallToolResult> => {
+    const created = await db.createProbationer({ fullName, email, managerEmail, jobTitle, department, startDate, endDate, status, notes });
     const probationers = await db.getAllProbationers();
     const allCheckIns = await db.getAllCheckIns();
     const allObjectives = await db.getAllObjectives();
@@ -350,6 +351,7 @@ export function createMcpServer(): McpServer {
       name: z.string().optional().describe("Full or partial name to locate the probationer if probationer_id is not provided."),
       fullName: z.string().optional(),
       email: z.string().optional(),
+      managerEmail: z.string().optional().describe("Line manager's UPN / email."),
       jobTitle: z.string().optional(),
       department: z.string().optional(),
       startDate: z.string().optional().describe("YYYY-MM-DD"),

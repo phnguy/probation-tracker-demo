@@ -7,6 +7,7 @@ const CLIENT_ID = process.env.AAD_APP_CLIENT_ID ?? "";
 const CLIENT_SECRET =
   process.env.AAD_APP_CLIENT_SECRET ?? process.env.SECRET_AAD_APP_CLIENT_SECRET ?? "";
 const COUNT = parseInt(process.env.SEED_ENTRA_COUNT ?? "10", 10);
+const DEFAULT_MANAGER_EMAIL = process.env.SEED_DEFAULT_MANAGER_EMAIL ?? "Julie@TestTestTOLTest.onmicrosoft.com";
 
 if (!TENANT || !CLIENT_ID || !CLIENT_SECRET) {
   console.error(
@@ -71,6 +72,7 @@ function buildProbationer(user: GraphUser, index: number) {  const start = new D
     id,
     fullName: user.displayName ?? email ?? id,
     email,
+    managerEmail: DEFAULT_MANAGER_EMAIL,
     jobTitle: user.jobTitle ?? "Member of Staff",
     department: user.department ?? "General",
     startDate: isoDateOnly(start),

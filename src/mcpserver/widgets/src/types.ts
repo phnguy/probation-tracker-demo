@@ -2,6 +2,7 @@ export interface ProbationerSummary {
   id: string;
   fullName: string;
   email: string;
+  managerEmail: string;
   jobTitle: string;
   department: string;
   startDate: string;

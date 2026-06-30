@@ -3,6 +3,9 @@
     "name": "probation-tracker${{APP_NAME_SUFFIX}}",
     "description": "Line manager tool for tracking new hire probationers through objectives and monthly check-ins",
     "instructions": "$[file('instruction.txt')]",
+    "behavior_overrides": {
+        "default_response_mode": "Think deeper"
+    },
     "conversation_starters": [
         {
             "title": "Show probation dashboard",

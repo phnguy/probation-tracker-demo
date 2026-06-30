@@ -8,31 +8,31 @@ const __dirname = path.dirname(__filename);
 const DB_DIR = path.resolve(__dirname, "..", "..", "db");
 
 async function seed() {
-  console.log("🌱 Seeding database...");
+  console.log("🌱 Seeding database (upsert)...");
   await ensureTables();
 
   const probationers = JSON.parse(fs.readFileSync(path.join(DB_DIR, "probationers.json"), "utf-8"));
   for (const p of probationers) {
     try {
-      await probationersTable.createEntity({ partitionKey: "default", rowKey: p.id, ...p });
+      await probationersTable.upsertEntity({ partitionKey: "default", rowKey: p.id, ...p }, "Replace");
       console.log(`  ✅ Probationer: ${p.fullName}`);
-    } catch { console.log(`  ⏭️  Probationer ${p.id} already exists`); }
+    } catch (err) { console.log(`  ❌ Probationer ${p.id}: ${(err as Error).message}`); }
   }
 
   const objectives = JSON.parse(fs.readFileSync(path.join(DB_DIR, "objectives.json"), "utf-8"));
   for (const o of objectives) {
     try {
-      await objectivesTable.createEntity({ partitionKey: o.probationerId, rowKey: o.id, ...o });
+      await objectivesTable.upsertEntity({ partitionKey: o.probationerId, rowKey: o.id, ...o }, "Replace");
       console.log(`  ✅ Objective: ${o.objective}`);
-    } catch { console.log(`  ⏭️  Objective ${o.id} already exists`); }
+    } catch (err) { console.log(`  ❌ Objective ${o.id}: ${(err as Error).message}`); }
   }
 
   const checkIns = JSON.parse(fs.readFileSync(path.join(DB_DIR, "checkins.json"), "utf-8"));
   for (const c of checkIns) {
     try {
-      await checkInsTable.createEntity({ partitionKey: c.probationerId, rowKey: c.id, ...c });
+      await checkInsTable.upsertEntity({ partitionKey: c.probationerId, rowKey: c.id, ...c }, "Replace");
       console.log(`  ✅ CheckIn: ${c.checkInName} for ${c.probationerId}`);
-    } catch { console.log(`  ⏭️  CheckIn ${c.id} already exists`); }
+    } catch (err) { console.log(`  ❌ CheckIn ${c.id}: ${(err as Error).message}`); }
   }
 
   console.log("\n✅ Seeding complete!");

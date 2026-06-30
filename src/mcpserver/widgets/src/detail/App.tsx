@@ -65,7 +65,7 @@ export function App() {
             </div>
             <Badge appearance="filled" color="informative" style={{ backgroundColor: probationer.statusColor, color: "white" }}>{probationer.statusLabel}</Badge>
           </div>
-          <Text>{probationer.notes}</Text>
+          <Text style={{ whiteSpace: "pre-wrap" }}>{probationer.notes}</Text>
           <div><Text className={styles.muted}>Probation timeline</Text><ProgressBar value={probationer.timelineProgress / 100} thickness="large" /></div>
           <div className={styles.row}><Text>Month {probationer.currentMonth} of 6</Text><Text>{probationer.daysRemaining} days remaining</Text></div>
         </Card>
@@ -89,7 +89,7 @@ export function App() {
                 <div className={styles.row}><Text weight="semibold">{checkIn.checkInName}</Text><Badge>{checkIn.status}</Badge></div>
                 <Text className={styles.muted}>Scheduled: {checkIn.scheduledDate}</Text>
                 <Text>Rating: {checkIn.overallRating || "Pending"}</Text>
-                <Text>{checkIn.notes || "No notes recorded."}</Text>
+                <Text style={{ whiteSpace: "pre-wrap" }}>{checkIn.notes || "No notes recorded."}</Text>
               </Card>
             ))}
             {checkIns.length === 0 && <Text>No check-ins available.</Text>}

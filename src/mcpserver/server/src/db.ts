@@ -26,11 +26,14 @@ export interface ProbationerEntity {
   id: string;
   fullName: string;
   email: string;
+  /** UPN / email of the line manager. Used to scope "my probationers" views. */
+  managerEmail: string;
   jobTitle: string;
   department: string;
   startDate: string;
   endDate: string;
   status: string;
+  /** Free-form notes. Azure Table Storage allows up to ~32 KB per string property. */
   notes: string;
   imageUrl: string;
 }
@@ -58,6 +61,12 @@ export interface CheckInEntity {
   completedDate: string;
   status: string;
   overallRating: string;
+  /**
+   * Free-form notes / full check-in report.
+   * Azure Table Storage allows up to ~32 KB per string property — enough to hold
+   * multi-section/multi-paragraph reports for a single check-in. Newlines are
+   * preserved; renderers should use white-space: pre-wrap.
+   */
   notes: string;
 }
 
@@ -101,6 +110,7 @@ export async function createProbationer(
     id,
     fullName: input.fullName,
     email: input.email,
+    managerEmail: input.managerEmail ?? "",
     jobTitle: input.jobTitle ?? "",
     department: input.department ?? "",
     startDate,
